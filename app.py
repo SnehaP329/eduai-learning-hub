@@ -81,27 +81,31 @@ if not is_authenticated:
 else:
     st.markdown("""
     <style>
-        /* FORCE SIDEBAR RESPONSIVE ARROW TO SHOW ON MOBILE RATIOS AFTER USER SIGN-IN */
+        /* SAFELY FORCE THE SIDEBAR BUTTON TO EXIST ON MOBILE */
         div[data-testid="collapsedControl"] {
             display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            position: fixed !important;
+            z-index: 999999 !important;
+            top: 10px !important;
+            left: 10px !important;
         }
         
-        /* Adjust native sidebar button depth placement */
         div[data-testid="collapsedControl"] button {
             background-color: #111D33 !important;
-            border: 1px solid #1D2F4F !important;
-            border-radius: 8px !important;
+            border: 2px solid #00F2FE !important;
+            border-radius: 10px !important;
             color: #00F2FE !important;
+            padding: 5px 10px !important;
+            box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3) !important;
         }
 
-        /* SAFE BAR OVERRIDE: Hides the text layout buttons from header but leaves modal containers intact */
+        /* SOFT HEADER CLEANUP: Ensures fullscreen picture modes work natively */
         header[data-testid="stHeader"] { 
             background-color: transparent !important;
-            height: 0px !important;
-            min-height: 0px !important;
-            overflow: visible !important;
         }
-        header[data-testid="stHeader"] div:first-child {
+        header[data-testid="stHeader"] div[data-testid="stHeaderActionElements"] {
             display: none !important;
         }
 
