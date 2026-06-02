@@ -193,6 +193,9 @@ else:
     </script>
     """, unsafe_allow_html=True)
 
+def hash_password(password):
+    return hashlib.sha256(str(password).encode('utf-8')).hexdigest()
+
 # ==========================================
 # 1. SQLITE INITIALIZATION
 # ==========================================
