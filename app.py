@@ -39,16 +39,9 @@ if not is_authenticated:
         div[data-testid="stDecoration"], div[data-testid="stAppToolbar"], .stAppToolbar { display: none !important; }
         .stDeployButton, div[data-testid="stDeployButton"], div[data-testid="stViewerMenu"] { display: none !important; }
         div[data-testid="stEmbedFooter"], .stEmbedFooter { display: none !important; visibility: hidden !important; height: 0px !important; }
+        div[data-testid="collapsedControl"] { display: none !important; }
         
-        /* HIDE TOGGLE ONLY ON LOGGED-OUT LOGIN SCREEN */
-        div[data-testid="collapsedControl"] {
-            display: none !important;
-        }
-        
-        div[data-testid="stVerticalBlock"] {
-            max-width: 100% !important;
-        }
-        
+        div[data-testid="stVerticalBlock"] { max-width: 100% !important; }
         div[data-testid="stVerticalBlock"] > div:has(div[data-baseweb="tab-list"]) {
             background: rgba(19, 34, 60, 0.85) !important;
             backdrop-filter: blur(20px) saturate(140%) !important;
@@ -87,47 +80,64 @@ if not is_authenticated:
 else:
     st.markdown("""
     <style>
-        /* FORCE NATIVE SIDEBAR ARROW CONTROL BACK TO LIFE ON EMBED MODES */
-        div[data-testid="collapsedControl"] {
-            display: flex !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            position: fixed !important;
-            z-index: 9999999 !important;
-            top: 15px !important;
-            left: 15px !important;
-        }
+        /* DISABLE SIDEBAR COMPONENTS GLOBALLY */
+        div[data-testid="collapsedControl"] { display: none !important; }
+        section[data-testid="stSidebar"] { display: none !important; }
         
-        div[data-testid="collapsedControl"] button {
-            background-color: #111D33 !important;
-            border: 2px solid #00F2FE !important;
-            border-radius: 10px !important;
-            color: #00F2FE !important;
-            padding: 6px 12px !important;
-            box-shadow: 0 4px 15px rgba(0, 242, 254, 0.35) !important;
-        }
-
-        /* HARD BRANDING OVERRIDES FOR CLEAN APP INTERFACE */
+        /* COHESIVE SYSTEM PANEL OVERRIDES */
         footer, header, #MainMenu { display: none !important; visibility: hidden !important; height: 0px !important; }
         div[data-testid="stDecoration"], div[data-testid="stAppToolbar"], .stAppToolbar { display: none !important; }
         .stDeployButton, div[data-testid="stDeployButton"], div[data-testid="stViewerMenu"] { display: none !important; }
         div[data-testid="stEmbedFooter"], .stEmbedFooter { display: none !important; visibility: hidden !important; height: 0px !important; }
 
         .stApp { background-color: #0B1426 !important; color: #E3E7ED !important; }
-        section[data-testid="stSidebar"] { background-color: #111D33 !important; border-right: 1px solid #172642 !important; }
-        section[data-testid="stSidebar"] div, section[data-testid="stSidebar"] span, section[data-testid="stSidebar"] label { color: #F2F3F5 !important; }
+        
+        /* PREMIUM MOBILE NAV COMPONENT STYLING */
+        div[data-testid="stHorizontalBlock"]:has(button[data-baseweb="tab"]) {
+            background: #111D33 !important;
+            border: 1px solid #1D2F4F !important;
+            border-radius: 16px !important;
+            padding: 5px 10px !important;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4) !important;
+            margin-bottom: 25px !important;
+        }
+        
+        /* Style Streamlit Tabs to look like a high-end App Header navigation layout */
+        div[data-baseweb="tab-list"] {
+            border-bottom: none !important;
+            gap: 4px !important;
+            width: 100% !important;
+            justify-content: space-between !important;
+        }
+        div[data-baseweb="tab-highlight"] { display: none !important; height: 0px !important; }
+        button[data-baseweb="tab"] {
+            color: #A4B3C6 !important;
+            background-color: transparent !important;
+            font-weight: 700 !important;
+            font-size: 0.95rem !important;
+            padding: 14px 10px !important;
+            border-radius: 10px !important;
+            border: none !important;
+            transition: all 0.25s ease !important;
+            flex: 1 !important;
+            text-align: center !important;
+        }
+        button[data-baseweb="tab"][aria-selected="true"] {
+            color: #00F2FE !important;
+            background-color: #1A2A47 !important;
+            border: 1px solid rgba(0, 242, 254, 0.2) !important;
+            text-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
+        }
+        
+        /* UI Components Styling */
         .stTextInput input, .stTextArea textarea, .stTimeInput input { background-color: #080E1A !important; color: #FFFFFF !important; border: 1px solid #1D2F4F !important; border-radius: 10px !important; -webkit-text-fill-color: #FFFFFF !important; }
         div[data-baseweb="select"] > div { background-color: #080E1A !important; color: #FFFFFF !important; border: 1px solid #1D2F4F !important; }
         div[data-baseweb="select"] [data-testid="stMarkdownContainer"] p { color: #FFFFFF !important; }
         .stTextInput input:focus, .stTextArea textarea:focus, .stTimeInput input:focus, div[data-baseweb="select"]:focus { border-color: #00F2FE !important; box-shadow: 0 0 8px rgba(0, 242, 254, 0.2) !important; }
-        div[data-baseweb="popover"], div[data-baseweb="menu"], div[role="listbox"], ul[role="listbox"], div[data-testid="stMainMenuPopover"] { background-color: #111D33 !important; border: 1px solid #1D2F4F !important; border-radius: 12px !important; box-shadow: 0 10px 40px rgba(0,0,0,0.5) !important; }
-        div[data-baseweb="popover"] ul, div[data-baseweb="menu"] ul { background-color: #111D33 !important; padding: 6px !important; }
-        div[data-baseweb="popover"] li, div[data-baseweb="menu"] li, div[data-baseweb="popover"] span, div[data-baseweb="popover"] button, div[data-baseweb="menu"] div { color: #FFFFFF !important; background-color: #111D33 !important; font-weight: 600 !important; transition: all 0.2s ease !important; }
-        div[data-baseweb="popover"] li:hover, div[data-baseweb="menu"] li:hover, div[data-baseweb="popover"] li:hover * { background-color: #1D2F4F !important; color: #00F2FE !important; }
         
         .dashboard-card { background: #111D33 !important; border: 1px solid #1D2F4F !important; padding: 24px; border-radius: 16px; margin-bottom: 20px; border-left: 5px solid #00F2FE !important; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
         div[data-testid="stMetric"] { background: #111D33 !important; border: 1px solid #1D2F4F !important; padding: 16px 22px !important; border-radius: 14px !important; box-shadow: 0 4px 15px rgba(0,0,0,0.15) !important; }
-        .profile-display-card { background: rgba(17, 29, 51, 0.6) !important; border: 1px solid #1D2F4F !important; padding: 35px; border-radius: 20px; margin-top: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
+        .profile-display-card { background: rgba(17, 29, 51, 0.6) !important; border: 1px solid #1D2F4F !important; padding: 35px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
         .profile-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid rgba(29, 47, 79, 0.6); }
         .profile-row:last-child { border-bottom: none; }
         .profile-field-label { color: #8E9AA8 !important; font-size: 0.9rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; }
@@ -269,23 +279,14 @@ if st.session_state.get('authentication_status'):
     current_name = st.session_state.get('name', 'User')
     current_username = st.session_state.get('username')
     
-    # RESTORED SIDEBAR CONFIGURATION NATIVELY
-    with st.sidebar:
-        st.markdown(f"<div style='background: #080E1A; border: 1px solid #1D2F4F; padding:16px; border-radius:12px; margin-bottom:25px; box-shadow:0 4px 12px rgba(0,0,0,0.2);'><h4 style='margin:0; color:#00F2FE; font-weight:700; text-shadow: 0 0 10px rgba(0,242,254,0.15);'>👋 {current_name}</h4></div>", unsafe_allow_html=True)
-        page = st.radio("Go to:", ["Home", "My Profile", "Text to Speech", "Study Reminders"])
-        st.markdown("<br><hr><br>", unsafe_allow_html=True)
-        
-        if st.button("Log Out", use_container_width=True):
-            st.session_state['authentication_status'] = None
-            st.session_state['username'] = None
-            st.session_state['name'] = None
-            if 'edit_profile_mode' in st.session_state:
-                del st.session_state['edit_profile_mode']
-            st.rerun()
+    # 🌟 RESTORED LOOK & FEEL UPGRADE: Modern App-Style Navigation Tabs Panel
+    tab_home, tab_profile, tab_tts, tab_reminders, tab_logout = st.tabs([
+        "🏠 Home", "👤 Profile", "🎙️ Text to Speech", "⏰ Reminders", "🚪 Log Out"
+    ])
 
-    # HOME SECTION
-    if page == "Home":
-        st.markdown(f"<h1 style='font-weight:800; letter-spacing:-0.5px; margin-top:15px;'>Welcome back, {current_name}!</h1>", unsafe_allow_html=True)
+    # 1. HOME MODULE
+    with tab_home:
+        st.markdown(f"<h1 style='font-weight:800; letter-spacing:-0.5px; margin-top:5px;'>Welcome back, {current_name}!</h1>", unsafe_allow_html=True)
         
         stat1, stat2, stat3 = st.columns(3)
         with stat1:
@@ -310,14 +311,14 @@ if st.session_state.get('authentication_status'):
             
         st.markdown("<br><h3 style='font-weight:700;'>Recent Activity Log</h3>", unsafe_allow_html=True)
         if not st.session_state['history']:
-            st.info("No documents processed yet. Go to 'Text to Speech' to get started.")
+            st.info("No documents processed yet. Go to the 'Text to Speech' module to get started.")
         else:
             for log in reversed(st.session_state['history']):
                 st.write(f"- **{log['time']}**: Read `{log['filename']}` ({log['chars']} characters converted).")
 
-    # MY PROFILE SECTION
-    elif page == "My Profile":
-        st.markdown("<h1 style='font-weight:800; letter-spacing:-0.5px; margin-top:15px;'>My Profile</h1>", unsafe_allow_html=True)
+    # 2. MY PROFILE MODULE
+    with tab_profile:
+        st.markdown("<h1 style='font-weight:800; letter-spacing:-0.5px; margin-top:5px;'>My Profile</h1>", unsafe_allow_html=True)
         st.write("Manage your personal details and account security settings below.")
         st.markdown("<br>", unsafe_allow_html=True)
         
@@ -388,8 +389,8 @@ if st.session_state.get('authentication_status'):
                         st.session_state['edit_profile_mode'] = False
                         st.rerun()
 
-    # TEXT TO SPEECH SECTION (Cloud-Native Pipeline)
-    elif page == "Text to Speech":
+    # 3. TEXT TO SPEECH MODULE
+    with tab_tts:
         st.markdown("<h1 style='font-weight:800; margin-top:15px;'>Text to Speech</h1>", unsafe_allow_html=True)
         st.write("Convert your handwritten pages or document snapshots into spoken audio.")
         st.markdown("<br>", unsafe_allow_html=True)
@@ -487,8 +488,8 @@ if st.session_state.get('authentication_status'):
                         except Exception as e:
                             st.error(f"Cloud Processing Error: {e}")
 
-    # STUDY REMINDERS SECTION 
-    elif page == "Study Reminders":
+    # 4. STUDY REMINDERS MODULE
+    with tab_reminders:
         st.markdown("<h1 style='font-weight:800; margin-top:15px;'>Study Reminders</h1>", unsafe_allow_html=True)
         st.write("Set up automated alerts to help keep your revision schedule on track.")
         st.markdown("<br>", unsafe_allow_html=True)
@@ -574,3 +575,16 @@ if st.session_state.get('authentication_status'):
                 <p style='margin:5px 0;'>🟢 Notification System: <b style='color:#43B581;'>Ready</b></p>
             </div>
             """, unsafe_allow_html=True)
+
+    # 5. LOG OUT CONTROL
+    with tab_logout:
+        st.markdown("<h2 style='font-weight:800; margin-top:15px;'>Sign Out of Platform</h2>", unsafe_allow_html=True)
+        st.write("Are you sure you want to log out of your profile session?")
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("Confirm Sign Out", use_container_width=True):
+            st.session_state['authentication_status'] = None
+            st.session_state['username'] = None
+            st.session_state['name'] = None
+            if 'edit_profile_mode' in st.session_state:
+                del st.session_state['edit_profile_mode']
+            st.rerun()
