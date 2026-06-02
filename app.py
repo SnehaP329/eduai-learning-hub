@@ -34,33 +34,16 @@ if not is_authenticated:
             color: #F2F3F5;
         }
         
-        /* HYPER-SPECIFIC EMBED CLEANUP (SAFE FOR SIDEBAR) */
-        footer { display: none !important; visibility: hidden !important; }
-        header { display: none !important; visibility: hidden !important; }
-        #MainMenu { display: none !important; }
-        div[data-testid="stDecoration"] { display: none !important; }
-        div[data-testid="stAppToolbar"] { display: none !important; }
-        .stAppToolbar { display: none !important; }
-        .stDeployButton { display: none !important; }
-        div[data-testid="stDeployButton"] { display: none !important; }
+        /* HARD BRANDING REMOVAL RULES */
+        footer, header, #MainMenu { display: none !important; visibility: hidden !important; height: 0px !important; }
+        div[data-testid="stDecoration"], div[data-testid="stAppToolbar"], .stAppToolbar { display: none !important; }
+        .stDeployButton, div[data-testid="stDeployButton"], div[data-testid="stViewerMenu"] { display: none !important; }
+        div[data-testid="stEmbedFooter"], .stEmbedFooter { display: none !important; visibility: hidden !important; height: 0px !important; }
         
-        /* Target the red frame directly without broad class matching */
-        div[data-testid="stEmbedFooter"], .stEmbedFooter { 
-            display: none !important; 
-            visibility: hidden !important; 
-            height: 0px !important; 
-            padding: 0px !important;
-        }
+        /* HIDE DEFAULT SIDEBAR TOGGLE ON LOGIN SCREEN */
+        div[data-testid="collapsedControl"] { display: none !important; }
         
-        /* HIDE TOGGLE ONLY ON LOGGED-OUT LOGIN SCREEN */
-        div[data-testid="collapsedControl"] {
-            display: none !important;
-        }
-        
-        div[data-testid="stVerticalBlock"] {
-            max-width: 100% !important;
-        }
-        
+        div[data-testid="stVerticalBlock"] { max-width: 100% !important; }
         div[data-testid="stVerticalBlock"] > div:has(div[data-baseweb="tab-list"]) {
             background: rgba(19, 34, 60, 0.85) !important;
             backdrop-filter: blur(20px) saturate(140%) !important;
@@ -99,43 +82,38 @@ if not is_authenticated:
 else:
     st.markdown("""
     <style>
-        /* FORCE SIDEBAR BUTTON BACK TO LIFE WITH MAXIMUM LAYERING DEPTH */
-        div[data-testid="collapsedControl"] {
-            display: flex !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            position: fixed !important;
-            z-index: 9999999 !important;
-            top: 15px !important;
-            left: 15px !important;
+        /* INJECT COHESIVE MOBILE FLOATING NAVIGATION ARROW */
+        .custom-mobile-toggle {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 99999999;
+            background-color: #111D33;
+            border: 2px solid #00F2FE;
+            color: #00F2FE;
+            border-radius: 10px;
+            padding: 8px 16px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0, 242, 254, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        .custom-mobile-toggle:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 25px rgba(0, 242, 254, 0.6);
         }
         
-        div[data-testid="collapsedControl"] button {
-            background-color: #111D33 !important;
-            border: 2px solid #00F2FE !important;
-            border-radius: 10px !important;
-            color: #00F2FE !important;
-            padding: 6px 12px !important;
-            box-shadow: 0 4px 15px rgba(0, 242, 254, 0.35) !important;
-        }
+        /* HARD BRANDING OVERRIDES FOR CLEAN APP INTERFACE */
+        footer, header, #MainMenu { display: none !important; visibility: hidden !important; height: 0px !important; }
+        div[data-testid="stDecoration"], div[data-testid="stAppToolbar"], .stAppToolbar { display: none !important; }
+        .stDeployButton, div[data-testid="stDeployButton"], div[data-testid="stViewerMenu"] { display: none !important; }
+        div[data-testid="stEmbedFooter"], .stEmbedFooter { display: none !important; visibility: hidden !important; height: 0px !important; }
 
-        /* TARGET CLEANUP PRECISELY without blocking sidebar rendering */
-        footer { display: none !important; visibility: hidden !important; }
-        header { display: none !important; visibility: hidden !important; }
-        #MainMenu { display: none !important; }
-        div[data-testid="stDecoration"] { display: none !important; }
-        div[data-testid="stAppToolbar"] { display: none !important; }
-        .stAppToolbar { display: none !important; }
-        .stDeployButton { display: none !important; }
-        div[data-testid="stDeployButton"] { display: none !important; }
-        
-        div[data-testid="stEmbedFooter"], .stEmbedFooter { 
-            display: none !important; 
-            visibility: hidden !important; 
-            height: 0px !important;
-            padding: 0px !important;
-        }
-
+        /* General dashboard application color schemes */
         .stApp { background-color: #0B1426 !important; color: #E3E7ED !important; }
         section[data-testid="stSidebar"] { background-color: #111D33 !important; border-right: 1px solid #172642; }
         section[data-testid="stSidebar"] div, section[data-testid="stSidebar"] span, section[data-testid="stSidebar"] label { color: #F2F3F5 !important; }
@@ -173,6 +151,25 @@ else:
         div[data-testid="stNotification"], div[role="alert"], div[data-testid="stToast"] { background-color: #111D33 !important; border: 1px solid #1D2F4F !important; border-radius: 12px !important; }
         div[data-testid="stNotification"] *, div[role="alert"] *, div[data-testid="stToast"] * { color: #FFFFFF !important; }
     </style>
+    """, unsafe_allow_html=True)
+    
+    # FORCED INJECTION SCRIPT: Automates clicking open the real menu programmatically via the custom button
+    st.markdown("""
+    <button class="custom-mobile-toggle" onclick="
+        var realArrow = window.parent.document.querySelector('div[data-testid=\'collapsedControl\'] button');
+        if (realArrow) {
+            realArrow.click();
+        } else {
+            var sidebar = window.parent.document.querySelector('section[data-testid=\'stSidebar\']');
+            if (sidebar) {
+                if (sidebar.style.visibility === 'hidden' || sidebar.getBoundingClientRect().width === 0) {
+                    window.parent.postMessage({type: 'streamlit:setSidebarOpen', value: true}, '*');
+                } else {
+                    window.parent.postMessage({type: 'streamlit:setSidebarOpen', value: false}, '*');
+                }
+            }
+        }
+    ">☰ Menu</button>
     """, unsafe_allow_html=True)
 
 if 'history' not in st.session_state:
