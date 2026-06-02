@@ -82,30 +82,8 @@ if not is_authenticated:
 else:
     st.markdown("""
     <style>
-        /* INJECT COHESIVE MOBILE FLOATING NAVIGATION ARROW */
-        .custom-mobile-toggle {
-            position: fixed;
-            top: 15px;
-            left: 15px;
-            z-index: 99999999;
-            background-color: #111D33;
-            border: 2px solid #00F2FE;
-            color: #00F2FE;
-            border-radius: 10px;
-            padding: 8px 16px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 20px rgba(0, 242, 254, 0.4);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-        }
-        .custom-mobile-toggle:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 25px rgba(0, 242, 254, 0.6);
-        }
+        /* HIDE NATIVE CONTROL DRAWER COMPLETELY */
+        div[data-testid="collapsedControl"] { display: none !important; }
         
         /* HARD BRANDING OVERRIDES FOR CLEAN APP INTERFACE */
         footer, header, #MainMenu { display: none !important; visibility: hidden !important; height: 0px !important; }
@@ -115,18 +93,21 @@ else:
 
         /* General dashboard application color schemes */
         .stApp { background-color: #0B1426 !important; color: #E3E7ED !important; }
-        section[data-testid="stSidebar"] { background-color: #111D33 !important; border-right: 1px solid #172642; }
-        section[data-testid="stSidebar"] div, section[data-testid="stSidebar"] span, section[data-testid="stSidebar"] label { color: #F2F3F5 !important; }
+        
+        /* Premium segment styling for our new content layout menu bar */
+        .navigation-container {
+            background-color: #111D33 !important;
+            border: 1px solid #1D2F4F !important;
+            padding: 15px 25px !important;
+            border-radius: 14px !important;
+            margin-bottom: 30px !important;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3) !important;
+        }
+        
         .stTextInput input, .stTextArea textarea, .stTimeInput input { background-color: #080E1A !important; color: #FFFFFF !important; border: 1px solid #1D2F4F !important; border-radius: 10px !important; -webkit-text-fill-color: #FFFFFF !important; }
         div[data-baseweb="select"] > div { background-color: #080E1A !important; color: #FFFFFF !important; border: 1px solid #1D2F4F !important; }
         div[data-baseweb="select"] [data-testid="stMarkdownContainer"] p { color: #FFFFFF !important; }
         .stTextInput input:focus, .stTextArea textarea:focus, .stTimeInput input:focus, div[data-baseweb="select"]:focus { border-color: #00F2FE !important; box-shadow: 0 0 8px rgba(0, 242, 254, 0.2) !important; }
-        div[data-baseweb="popover"], div[data-baseweb="menu"], div[role="listbox"], ul[role="listbox"], div[data-testid="stMainMenuPopover"] { background-color: #111D33 !important; border: 1px solid #1D2F4F !important; border-radius: 12px !important; box-shadow: 0 10px 40px rgba(0,0,0,0.5) !important; }
-        div[data-baseweb="popover"] ul, div[data-baseweb="menu"] ul { background-color: #111D33 !important; padding: 6px !important; }
-        div[data-baseweb="popover"] li, div[data-baseweb="menu"] li, div[data-baseweb="popover"] span, div[data-baseweb="popover"] button, div[data-baseweb="menu"] div { color: #FFFFFF !important; background-color: #111D33 !important; font-weight: 600 !important; transition: all 0.2s ease !important; }
-        div[data-baseweb="popover"] li:hover, div[data-baseweb="menu"] li:hover, div[data-baseweb="popover"] li:hover * { background-color: #1D2F4F !important; color: #00F2FE !important; }
-        div[data-testid="stMainMenuPopover"] div, div[data-testid="stMainMenuPopover"] button, div[data-testid="stMainMenuPopover"] span, div[data-testid="stMainMenuPopover"] ul * { color: #FFFFFF !important; }
-        div[data-testid="stMainMenuPopover"] ul div, div[data-testid="stMainMenuPopover"] [role="menuitem"], div[data-testid="stMainMenuPopover"] [style*="background-color"] { background-color: #1A2A47 !important; border: 1px solid #243B62 !important; border-radius: 8px !important; }
         
         .dashboard-card { background: #111D33 !important; border: 1px solid #1D2F4F !important; padding: 24px; border-radius: 16px; margin-bottom: 20px; border-left: 5px solid #00F2FE !important; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
         div[data-testid="stMetric"] { background: #111D33 !important; border: 1px solid #1D2F4F !important; padding: 16px 22px !important; border-radius: 14px !important; box-shadow: 0 4px 15px rgba(0,0,0,0.15) !important; }
@@ -143,33 +124,10 @@ else:
         div[data-testid="stFileUploader"] section { background-color: #080E1A !important; border: 2px dashed #1D2F4F !important; border-radius: 14px; }
         div[data-testid="stFileUploader"] section button span { color: #070B14 !important; }
         div[data-testid="stFileUploader"] section button { background: linear-gradient(135deg, #00F2FE 0%, #40E0D0 100%) !important; border: none !important; border-radius: 8px !important; font-weight: 700; }
-        div[data-testid="stFileUploaderCard"] { background-color: #111D33 !important; border: 1px solid #1D2F4F !important; border-radius: 8px !important; }
-        div[data-testid="stFileUploaderCard"] * { color: #FFFFFF !important; background-color: transparent !important; }
         
         h1, h2, h3, h4, h5, h6, p, label, span { color: #F2F3F5 !important; }
         hr { border-color: #1D2F4F !important; }
-        div[data-testid="stNotification"], div[role="alert"], div[data-testid="stToast"] { background-color: #111D33 !important; border: 1px solid #1D2F4F !important; border-radius: 12px !important; }
-        div[data-testid="stNotification"] *, div[role="alert"] *, div[data-testid="stToast"] * { color: #FFFFFF !important; }
     </style>
-    """, unsafe_allow_html=True)
-    
-    # FORCED INJECTION SCRIPT: Automates clicking open the real menu programmatically via the custom button
-    st.markdown("""
-    <button class="custom-mobile-toggle" onclick="
-        var realArrow = window.parent.document.querySelector('div[data-testid=\'collapsedControl\'] button');
-        if (realArrow) {
-            realArrow.click();
-        } else {
-            var sidebar = window.parent.document.querySelector('section[data-testid=\'stSidebar\']');
-            if (sidebar) {
-                if (sidebar.style.visibility === 'hidden' || sidebar.getBoundingClientRect().width === 0) {
-                    window.parent.postMessage({type: 'streamlit:setSidebarOpen', value: true}, '*');
-                } else {
-                    window.parent.postMessage({type: 'streamlit:setSidebarOpen', value: false}, '*');
-                }
-            }
-        }
-    ">☰ Menu</button>
     """, unsafe_allow_html=True)
 
 if 'history' not in st.session_state:
@@ -291,18 +249,26 @@ if st.session_state.get('authentication_status'):
     current_name = st.session_state.get('name', 'User')
     current_username = st.session_state.get('username')
     
-    with st.sidebar:
-        st.markdown(f"<div style='background: #080E1A; border: 1px solid #1D2F4F; padding:16px; border-radius:12px; margin-bottom:25px; box-shadow:0 4px 12px rgba(0,0,0,0.2);'><h4 style='margin:0; color:#00F2FE; font-weight:700; text-shadow: 0 0 10px rgba(0,242,254,0.15);'>👋 {current_name}</h4></div>", unsafe_allow_html=True)
-        page = st.radio("Go to:", ["Home", "My Profile", "Text to Speech", "Study Reminders"])
-        st.markdown("<br><hr><br>", unsafe_allow_html=True)
-        
-        if st.button("Log Out", use_container_width=True):
+    # 🌟 CORE MOBILE RESOLUTION UPGRADE: 
+    # Render the selector panel directly into the top of the main layout container.
+    # This renders beautifully on desktops and is entirely safe from iframe blocks on phone browsers!
+    st.markdown('<div class="navigation-container">', unsafe_allow_html=True)
+    nav_col1, nav_col2 = st.columns([3, 1])
+    with nav_col1:
+        page = st.selectbox(
+            "📍 App Modules Navigation Menu:", 
+            ["Home", "My Profile", "Text to Speech", "Study Reminders"],
+            label_visibility="collapsed"
+        )
+    with nav_col2:
+        if st.button("🚪 Sign Out", use_container_width=True):
             st.session_state['authentication_status'] = None
             st.session_state['username'] = None
             st.session_state['name'] = None
             if 'edit_profile_mode' in st.session_state:
                 del st.session_state['edit_profile_mode']
             st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
     # HOME SECTION
     if page == "Home":
