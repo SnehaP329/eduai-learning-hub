@@ -41,6 +41,11 @@ if not is_authenticated:
         div[data-testid="stEmbedFooter"], .stEmbedFooter { display: none !important; visibility: hidden !important; height: 0px !important; }
         div[data-testid="collapsedControl"] { display: none !important; }
         
+        /* SURGICAL ELIMINATION OF THE BOTTOM RIGHT CORNER LOGO STRIP */
+        iframe[title="streamlitApp"] { bottom: 0 !important; }
+        [data-testid="stStatusWidget"] { display: none !important; visibility: hidden !important; }
+        .viewerBadge, [class*="viewerBadge"], a[href*="streamlit.io"] { display: none !important; visibility: hidden !important; opacity: 0 !important; }
+        
         div[data-testid="stVerticalBlock"] { max-width: 100% !important; }
         div[data-testid="stVerticalBlock"] > div:has(div[data-baseweb="tab-list"]) {
             background: rgba(19, 34, 60, 0.85) !important;
@@ -92,6 +97,11 @@ else:
         div[data-testid="stDecoration"], div[data-testid="stAppToolbar"], .stAppToolbar { display: none !important; }
         .stDeployButton, div[data-testid="stDeployButton"], div[data-testid="stViewerMenu"] { display: none !important; }
         div[data-testid="stEmbedFooter"], .stEmbedFooter { display: none !important; visibility: hidden !important; height: 0px !important; }
+
+        /* SURGICAL ELIMINATION OF THE BOTTOM RIGHT CORNER LOGO STRIP */
+        iframe[title="streamlitApp"] { bottom: 0 !important; }
+        [data-testid="stStatusWidget"] { display: none !important; visibility: hidden !important; }
+        .viewerBadge, [class*="viewerBadge"], a[href*="streamlit.io"] { display: none !important; visibility: hidden !important; opacity: 0 !important; }
 
         .stApp { background-color: #0B1426 !important; color: #E3E7ED !important; }
         
@@ -162,138 +172,12 @@ else:
     </style>
     """, unsafe_allow_html=True)
 
-if 'history' not in st.session_state:
-    st.session_state['history'] = []
-
-def hash_password(password):
-    return hashlib.sha256(str(password).encode('utf-8')).hexdigest()
-
-# ==========================================
-# 1. SQLITE INITIALIZATION
-# ==========================================
-def auto_initialize_db():
-    conn = sqlite3.connect('platform.db')
-    cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            username TEXT PRIMARY KEY,
-            name TEXT NOT NULL,
-            hashed_password TEXT NOT NULL
-        )
-    ''')
-    cursor.execute("SELECT * FROM users WHERE username='sneha'")
-    if not cursor.fetchone():
-        default_hash = hash_password("password123")
-        cursor.execute(
-            "INSERT INTO users (username, name, hashed_password) VALUES (?, ?, ?)",
-            ("sneha", "Sneha", default_hash)
-        )
-        conn.commit()
-    conn.close()
-
-auto_initialize_db()
-
-def get_user_from_db(username):
-    conn = sqlite3.connect('platform.db')
-    cursor = conn.cursor()
-    cursor.execute("SELECT username, name, hashed_password FROM users WHERE username = ?", (username,))
-    row = cursor.fetchone()
-    conn.close()
-    if row:
-        return {"usernames": {row[0]: {"name": row[1], "password": row[2]}}}
-    return {"usernames": {}}
-
-def add_user_to_db(username, name, hashed_password):
-    try:
-        conn = sqlite3.connect('platform.db')
-        cursor = conn.cursor()
-        cursor.execute("INSERT INTO users (username, name, hashed_password) VALUES (?, ?, ?)", (username, name, hashed_password))
-        conn.commit()
-        conn.close()
-        return True
-    except sqlite3.IntegrityError:
-        return False
-
-def update_user_profile(username, name, hashed_password=None):
-    conn = sqlite3.connect('platform.db')
-    cursor = conn.cursor()
-    if hashed_password:
-        cursor.execute("UPDATE users SET name = ?, hashed_password = ? WHERE username = ?", (name, hashed_password, username))
-    else:
-        cursor.execute("UPDATE users SET name = ? WHERE username = ?", (name, username))
-    conn.commit()
-    conn.close()
-
-# ==========================================
-# 2. USER LOGIN / REGISTRATION INTERFACE
-# ==========================================
-if not st.session_state.get('authentication_status'):
-    st.markdown("<h1 style='text-align: center; color: #FFFFFF; font-weight:800; font-size:3rem; margin-top:50px; letter-spacing:-0.5px;'>EduAI</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: #8E9AA8; font-size:1.1rem; margin-bottom:40px;'>Learn smarter, grow faster with AI-powered Education</p>", unsafe_allow_html=True)
-    
-    auth_tab1, auth_tab2 = st.tabs(["🔒 Sign In", "Create Account"])
-    
-    with auth_tab1:
-        username_input = st.text_input("Username", key="login_user")
-        password_input = st.text_input("Password", type="password", key="login_pass")
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        if st.button("Sign In", use_container_width=True):
-            db_credentials = get_user_from_db(username_input)
-            if username_input in db_credentials["usernames"]:
-                stored_hash = db_credentials["usernames"][username_input]["password"]
-                input_hash = hash_password(password_input)
-                
-                if input_hash == stored_hash or password_input == "password123" or password_input == "password1234" or stored_hash == password_input:
-                    if stored_hash != input_hash:
-                        update_user_profile(username_input, db_credentials["usernames"][username_input]["name"], input_hash)
-                        
-                    st.session_state['authentication_status'] = True
-                    st.session_state['username'] = username_input
-                    st.session_state['name'] = db_credentials["usernames"][username_input]["name"]
-                    st.rerun()
-                else:
-                    st.error("Incorrect password. Please try again.")
-            else:
-                st.error("Username not found.")
-                
-    with auth_tab2:
-        new_user = st.text_input("Choose Username", key="reg_user")
-        new_name = st.text_input("Your Full Name", key="reg_name")
-        new_pass = st.text_input("Choose Password", type="password", key="reg_pass")
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        if st.button("Register", use_container_width=True):
-            if new_user and new_name and new_pass:
-                hashed_reg_pass = hash_password(new_pass)
-                success = add_user_to_db(new_user, new_name, hashed_reg_pass)
-                if success:
-                    st.success("Account created successfully! You can now sign in.")
-                else:
-                    st.error("That username is already taken. Try another.")
-            else:
-                st.warning("Please fill in all fields.")
-
-# ==========================================
-# 3. INTERNAL AUTHENTICATED SYSTEM DASHBOARD
-# ==========================================
-if st.session_state.get('authentication_status'):
-    current_name = st.session_state.get('name', 'User')
-    current_username = st.session_state.get('username')
-    
-    # Injects a sleek, centered 'EduAI' branding title into the top space
-    st.markdown("<h2 style='text-align: center; color: #FFFFFF; font-weight:900; font-size:2.2rem; margin-top: 0px; margin-bottom: 15px; letter-spacing:-0.5px;'>EduAI</h2>", unsafe_allow_html=True)
-    
-    # 🌟 AUTOMATED PWA OVERRIDE INJECTION: Forces browser installers to read app metadata as EduAI for all users
+    # Injects a background document title overwrite script natively
     st.markdown("""
     <script>
-        // Forces browser windows to read tab titles and system references as EduAI
         window.parent.document.title = "EduAI";
-        
-        // Dynamic Manifest Injector: Targets apple-mobile installation frames
         var metaTitle = window.parent.document.querySelector('meta[name="apple-mobile-web-app-title"]');
         if (metaTitle) { metaTitle.setAttribute("content", "EduAI"); }
-        
         var appName = window.parent.document.querySelector('meta[name="application-name"]');
         if (appName) { appName.setAttribute("content", "EduAI"); }
     </script>
@@ -301,7 +185,7 @@ if st.session_state.get('authentication_status'):
     
     # Navigation Tabs Panel
     tab_home, tab_profile, tab_tts, tab_reminders, tab_logout = st.tabs([
-        "🏠 Home", "👤 Profile", "🎙️ Text to Speech", "⏰ Reminders", "🚪 Log Out"
+        "Home", "Profile", "Text to Speech", "Reminders", "Log Out"
     ])
 
     # 1. HOME MODULE
@@ -397,9 +281,9 @@ if st.session_state.get('authentication_status'):
                         else:
                             hashed_pass = None
                             if change_password_checkbox:
-                                hash_pass = hash_password(new_password_val)
+                                hashed_pass = hash_password(new_password_val)
                                 
-                            update_user_profile(current_username, updated_name, hash_pass)
+                            update_user_profile(current_username, updated_name, hashed_pass)
                             st.session_state['name'] = updated_name
                             st.session_state['edit_profile_mode'] = False
                             st.success("Profile saved successfully!")
