@@ -109,13 +109,18 @@ else:
             box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3) !important;
         }
 
-        /* HARD CLEANUP OF INTERACTIVE SYSTEM STRIPS FOR CLEAN APP DISPLAY */
-        footer { visibility: hidden !important; }
-        #MainMenu { visibility: hidden !important; }
-        header { visibility: hidden !important; }
+      /* HARD CLEANUP OF INTERACTIVE SYSTEM STRIPS FOR CLEAN APP DISPLAY */
+        footer { visibility: hidden !important; display: none !important; }
+        #MainMenu { visibility: hidden !important; display: none !important; }
+        header { visibility: hidden !important; display: none !important; }
         div[data-testid="stDecoration"] { display: none !important; }
         div[data-testid="stAppToolbar"] { display: none !important; }
         .stAppToolbar { display: none !important; }
+        
+        /* TARGETS AND HIDES THE BOTTOM RIGHT LOGO / RUNNING MAN ICON */
+        .stDeployButton { display: none !important; visibility: hidden !important; }
+        div[data-testid="stDeployButton"] { display: none !important; }
+        div[data-testid="stViewerMenu"] { display: none !important; visibility: hidden !important; }
 
         .stApp { background-color: #0B1426 !important; color: #E3E7ED !important; }
         section[data-testid="stSidebar"] { background-color: #111D33 !important; border-right: 1px solid #172642; }
