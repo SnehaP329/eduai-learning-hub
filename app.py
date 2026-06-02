@@ -80,6 +80,9 @@ if not is_authenticated:
 else:
     st.markdown("""
     <style>
+        /* CONFIGURING LAYOUT POSITIONING TO MOVE BRANDING CLEANLY TO TOP EFFECTIVELY */
+        .block-container { padding-top: 2rem !important; padding-bottom: 2rem !important; }
+        
         /* DISABLE SIDEBAR COMPONENTS GLOBALLY */
         div[data-testid="collapsedControl"] { display: none !important; }
         section[data-testid="stSidebar"] { display: none !important; }
@@ -102,7 +105,6 @@ else:
             margin-bottom: 25px !important;
         }
         
-        /* Style Streamlit Tabs to look like a high-end App Header navigation layout */
         div[data-baseweb="tab-list"] {
             border-bottom: none !important;
             gap: 4px !important;
@@ -279,9 +281,12 @@ if st.session_state.get('authentication_status'):
     current_name = st.session_state.get('name', 'User')
     current_username = st.session_state.get('username')
     
-    # 🌟 RESTORED LOOK & FEEL UPGRADE: Modern App-Style Navigation Tabs Panel
+    # 🌟 CORE GAP CORRECTION: Injects a sleek, centered 'EduAI' branding title into the empty top space
+    st.markdown("<h2 style='text-align: center; color: #FFFFFF; font-weight:900; font-size:2.2rem; margin-top: 0px; margin-bottom: 15px; letter-spacing:-0.5px;'>EduAI</h2>", unsafe_allow_html=True)
+    
+    # Navigation Tabs Panel
     tab_home, tab_profile, tab_tts, tab_reminders, tab_logout = st.tabs([
-        "🏠 Home", "👤 Profile", "🎙️ Text to Speech", "⏰ Reminders", "🚪 Log Out"
+        "Home", "Profile", "Text to Speech", "Reminders", "Log Out"
     ])
 
     # 1. HOME MODULE
