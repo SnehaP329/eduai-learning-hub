@@ -125,6 +125,9 @@ else:
         .stApp { background-color: #0B1426 !important; color: #E3E7ED !important; }
         section[data-testid="stSidebar"] { background-color: #111D33 !important; border-right: 1px solid #172642; }
         section[data-testid="stSidebar"] div, section[data-testid="stSidebar"] span, section[data-testid="stSidebar"] label { color: #F2F3F5 !important; }
+        /* FORCE HIDE THE NEW RED BOTTOM EMBEDDED BAR */
+        div[data-testid="stEmbedFooter"] { display: none !important; visibility: hidden !important; height: 0px !important; }
+        .stEmbedFooter { display: none !important; }
         .stTextInput input, .stTextArea textarea, .stTimeInput input { background-color: #080E1A !important; color: #FFFFFF !important; border: 1px solid #1D2F4F !important; border-radius: 10px !important; -webkit-text-fill-color: #FFFFFF !important; }
         div[data-baseweb="select"] > div { background-color: #080E1A !important; color: #FFFFFF !important; border: 1px solid #1D2F4F !important; }
         div[data-baseweb="select"] [data-testid="stMarkdownContainer"] p { color: #FFFFFF !important; }
