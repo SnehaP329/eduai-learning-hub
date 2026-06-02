@@ -34,6 +34,14 @@ if not is_authenticated:
             color: #F2F3F5;
         }
         
+        /* GLOBAL BRANDING / TOOLBAR CLEANUP */
+        footer { visibility: hidden !important; }
+        #MainMenu { visibility: hidden !important; }
+        header { visibility: hidden !important; }
+        div[data-testid="stDecoration"] { display: none !important; }
+        div[data-testid="stAppToolbar"] { display: none !important; }
+        .stAppToolbar { display: none !important; }
+        
         /* HIDE TOGGLE ONLY ON LOGGED-OUT LOGIN SCREEN */
         div[data-testid="collapsedControl"] {
             display: none !important;
@@ -101,13 +109,13 @@ else:
             box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3) !important;
         }
 
-        /* SOFT HEADER CLEANUP: Ensures fullscreen picture modes work natively */
-        header[data-testid="stHeader"] { 
-            background-color: transparent !important;
-        }
-        header[data-testid="stHeader"] div[data-testid="stHeaderActionElements"] {
-            display: none !important;
-        }
+        /* HARD CLEANUP OF INTERACTIVE SYSTEM STRIPS FOR CLEAN APP DISPLAY */
+        footer { visibility: hidden !important; }
+        #MainMenu { visibility: hidden !important; }
+        header { visibility: hidden !important; }
+        div[data-testid="stDecoration"] { display: none !important; }
+        div[data-testid="stAppToolbar"] { display: none !important; }
+        .stAppToolbar { display: none !important; }
 
         .stApp { background-color: #0B1426 !important; color: #E3E7ED !important; }
         section[data-testid="stSidebar"] { background-color: #111D33 !important; border-right: 1px solid #172642; }
