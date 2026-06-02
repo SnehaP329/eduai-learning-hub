@@ -34,13 +34,23 @@ if not is_authenticated:
             color: #F2F3F5;
         }
         
-        /* GLOBAL BRANDING / TOOLBAR CLEANUP */
-        footer { visibility: hidden !important; }
-        #MainMenu { visibility: hidden !important; }
-        header { visibility: hidden !important; }
+        /* HYPER-SPECIFIC EMBED CLEANUP (SAFE FOR SIDEBAR) */
+        footer { display: none !important; visibility: hidden !important; }
+        header { display: none !important; visibility: hidden !important; }
+        #MainMenu { display: none !important; }
         div[data-testid="stDecoration"] { display: none !important; }
         div[data-testid="stAppToolbar"] { display: none !important; }
         .stAppToolbar { display: none !important; }
+        .stDeployButton { display: none !important; }
+        div[data-testid="stDeployButton"] { display: none !important; }
+        
+        /* Target the red frame directly without broad class matching */
+        div[data-testid="stEmbedFooter"], .stEmbedFooter { 
+            display: none !important; 
+            visibility: hidden !important; 
+            height: 0px !important; 
+            padding: 0px !important;
+        }
         
         /* HIDE TOGGLE ONLY ON LOGGED-OUT LOGIN SCREEN */
         div[data-testid="collapsedControl"] {
@@ -89,15 +99,15 @@ if not is_authenticated:
 else:
     st.markdown("""
     <style>
-        /* SAFELY FORCE THE SIDEBAR BUTTON TO EXIST ON MOBILE */
+        /* FORCE SIDEBAR BUTTON BACK TO LIFE WITH MAXIMUM LAYERING DEPTH */
         div[data-testid="collapsedControl"] {
             display: flex !important;
             visibility: visible !important;
             opacity: 1 !important;
             position: fixed !important;
-            z-index: 999999 !important;
-            top: 10px !important;
-            left: 10px !important;
+            z-index: 9999999 !important;
+            top: 15px !important;
+            left: 15px !important;
         }
         
         div[data-testid="collapsedControl"] button {
@@ -105,31 +115,30 @@ else:
             border: 2px solid #00F2FE !important;
             border-radius: 10px !important;
             color: #00F2FE !important;
-            padding: 5px 10px !important;
-            box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3) !important;
+            padding: 6px 12px !important;
+            box-shadow: 0 4px 15px rgba(0, 242, 254, 0.35) !important;
         }
 
-      /* HARD CLEANUP OF INTERACTIVE SYSTEM STRIPS FOR CLEAN APP DISPLAY */
-        footer { visibility: hidden !important; display: none !important; }
-        #MainMenu { visibility: hidden !important; display: none !important; }
-        header { visibility: hidden !important; display: none !important; }
+        /* TARGET CLEANUP PRECISELY without blocking sidebar rendering */
+        footer { display: none !important; visibility: hidden !important; }
+        header { display: none !important; visibility: hidden !important; }
+        #MainMenu { display: none !important; }
         div[data-testid="stDecoration"] { display: none !important; }
         div[data-testid="stAppToolbar"] { display: none !important; }
         .stAppToolbar { display: none !important; }
-        
-        /* TARGETS AND HIDES THE BOTTOM RIGHT LOGO / RUNNING MAN ICON */
-        .stDeployButton { display: none !important; visibility: hidden !important; }
+        .stDeployButton { display: none !important; }
         div[data-testid="stDeployButton"] { display: none !important; }
-        div[data-testid="stViewerMenu"] { display: none !important; visibility: hidden !important; }
+        
+        div[data-testid="stEmbedFooter"], .stEmbedFooter { 
+            display: none !important; 
+            visibility: hidden !important; 
+            height: 0px !important;
+            padding: 0px !important;
+        }
 
-         /* FORCE HIDE THE NEW RED BOTTOM EMBEDDED BAR */
-        div[data-testid="stEmbedFooter"] { display: none !important; visibility: hidden !important; height: 0px !important; }
-        .stEmbedFooter { display: none !important; }
         .stApp { background-color: #0B1426 !important; color: #E3E7ED !important; }
         section[data-testid="stSidebar"] { background-color: #111D33 !important; border-right: 1px solid #172642; }
         section[data-testid="stSidebar"] div, section[data-testid="stSidebar"] span, section[data-testid="stSidebar"] label { color: #F2F3F5 !important; }
-       
-        
         .stTextInput input, .stTextArea textarea, .stTimeInput input { background-color: #080E1A !important; color: #FFFFFF !important; border: 1px solid #1D2F4F !important; border-radius: 10px !important; -webkit-text-fill-color: #FFFFFF !important; }
         div[data-baseweb="select"] > div { background-color: #080E1A !important; color: #FFFFFF !important; border: 1px solid #1D2F4F !important; }
         div[data-baseweb="select"] [data-testid="stMarkdownContainer"] p { color: #FFFFFF !important; }
