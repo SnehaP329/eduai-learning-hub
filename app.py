@@ -7,8 +7,8 @@ from gtts import gTTS
 from datetime import datetime
 import hashlib
 
-# Page configuration
-st.set_page_config(page_title="EduAI | Learning Hub", page_icon="🎓", layout="wide")
+# Page configuration - Set page title to EduAI globally
+st.set_page_config(page_title="EduAI", page_icon="🎓", layout="wide")
 
 # Securely initialize the Gemini Cloud Client using Streamlit Secrets
 try:
@@ -281,12 +281,27 @@ if st.session_state.get('authentication_status'):
     current_name = st.session_state.get('name', 'User')
     current_username = st.session_state.get('username')
     
-    # 🌟 CORE GAP CORRECTION: Injects a sleek, centered 'EduAI' branding title into the empty top space
+    # Injects a sleek, centered 'EduAI' branding title into the top space
     st.markdown("<h2 style='text-align: center; color: #FFFFFF; font-weight:900; font-size:2.2rem; margin-top: 0px; margin-bottom: 15px; letter-spacing:-0.5px;'>EduAI</h2>", unsafe_allow_html=True)
+    
+    # 🌟 AUTOMATED PWA OVERRIDE INJECTION: Forces browser installers to read app metadata as EduAI for all users
+    st.markdown("""
+    <script>
+        // Forces browser windows to read tab titles and system references as EduAI
+        window.parent.document.title = "EduAI";
+        
+        // Dynamic Manifest Injector: Targets apple-mobile installation frames
+        var metaTitle = window.parent.document.querySelector('meta[name="apple-mobile-web-app-title"]');
+        if (metaTitle) { metaTitle.setAttribute("content", "EduAI"); }
+        
+        var appName = window.parent.document.querySelector('meta[name="application-name"]');
+        if (appName) { appName.setAttribute("content", "EduAI"); }
+    </script>
+    """, unsafe_allow_html=True)
     
     # Navigation Tabs Panel
     tab_home, tab_profile, tab_tts, tab_reminders, tab_logout = st.tabs([
-        "Home", "Profile", "Text to Speech", "Reminders", "Log Out"
+        "🏠 Home", "👤 Profile", "🎙️ Text to Speech", "⏰ Reminders", "🚪 Log Out"
     ])
 
     # 1. HOME MODULE
@@ -382,9 +397,9 @@ if st.session_state.get('authentication_status'):
                         else:
                             hashed_pass = None
                             if change_password_checkbox:
-                                hashed_pass = hash_password(new_password_val)
+                                hash_pass = hash_password(new_password_val)
                                 
-                            update_user_profile(current_username, updated_name, hashed_pass)
+                            update_user_profile(current_username, updated_name, hash_pass)
                             st.session_state['name'] = updated_name
                             st.session_state['edit_profile_mode'] = False
                             st.success("Profile saved successfully!")
