@@ -11,7 +11,6 @@ import hashlib
 st.set_page_config(page_title="EduAI | Learning Hub", page_icon="🎓", layout="wide")
 
 # Securely initialize the Gemini Cloud Client using Streamlit Secrets
-# This replaces the need for local Tesseract and local Ollama installations
 try:
     client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
 except Exception:
@@ -34,8 +33,15 @@ if not is_authenticated:
             animation: algowaveFlow 15s ease infinite;
             color: #F2F3F5;
         }
-        div[data-testid="collapsedControl"] { display: none !important; }
-        div[data-testid="stVerticalBlock"] { max-width: 100% !important; }
+        
+        /* HIDE TOGGLE ONLY ON LOGGED-OUT LOGIN SCREEN */
+        div[data-testid="collapsedControl"] {
+            display: none !important;
+        }
+        
+        div[data-testid="stVerticalBlock"] {
+            max-width: 100% !important;
+        }
         
         div[data-testid="stVerticalBlock"] > div:has(div[data-baseweb="tab-list"]) {
             background: rgba(19, 34, 60, 0.85) !important;
@@ -66,7 +72,7 @@ if not is_authenticated:
         div.stButton > button {
             background: linear-gradient(135deg, #00F2FE 0%, #40E0D0 100%) !important; color: #070B14 !important; border: none !important;
             border-radius: 12px !important; font-weight: 800 !important; font-size: 1.1rem !important; padding: 14px 24px !important;
-            box-shadow: 0 8px 24 rgba(0, 242, 254, 0.3) !important; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important; margin-top: 10px !important;
+            box-shadow: 0 8px 24px rgba(0, 242, 254, 0.3) !important; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important; margin-top: 10px !important;
         }
         div.stButton > button:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(0, 242, 254, 0.5) !important; }
         h1, h2, h3, h4, h5, h6, p, label, span { color: #F2F3F5 !important; }
@@ -75,7 +81,30 @@ if not is_authenticated:
 else:
     st.markdown("""
     <style>
-        header[data-testid="stHeader"] { display: none !important; }
+        /* FORCE SIDEBAR RESPONSIVE ARROW TO SHOW ON MOBILE RATIOS AFTER USER SIGN-IN */
+        div[data-testid="collapsedControl"] {
+            display: flex !important;
+        }
+        
+        /* Adjust native sidebar button depth placement */
+        div[data-testid="collapsedControl"] button {
+            background-color: #111D33 !important;
+            border: 1px solid #1D2F4F !important;
+            border-radius: 8px !important;
+            color: #00F2FE !important;
+        }
+
+        /* SAFE BAR OVERRIDE: Hides the text layout buttons from header but leaves modal containers intact */
+        header[data-testid="stHeader"] { 
+            background-color: transparent !important;
+            height: 0px !important;
+            min-height: 0px !important;
+            overflow: visible !important;
+        }
+        header[data-testid="stHeader"] div:first-child {
+            display: none !important;
+        }
+
         .stApp { background-color: #0B1426 !important; color: #E3E7ED !important; }
         section[data-testid="stSidebar"] { background-color: #111D33 !important; border-right: 1px solid #172642; }
         section[data-testid="stSidebar"] div, section[data-testid="stSidebar"] span, section[data-testid="stSidebar"] label { color: #F2F3F5 !important; }
@@ -394,7 +423,6 @@ if st.session_state.get('authentication_status'):
                         try:
                             image_obj = Image.open(uploaded_file)
                             
-                            # Formulate cloud execution prompt instruction criteria
                             if "Summarized" in extraction_mode:
                                 prompt_content = (
                                     "Analyze the handwritten text in this image. Do not transcribe it word-for-word. "
@@ -406,7 +434,6 @@ if st.session_state.get('authentication_status'):
                                     "Fix clear spelling typos smoothly, do not leave out lines, and output clean raw text layout."
                                 )
                             
-                            # Cloud multimodal extraction call
                             response = client.models.generate_content(
                                 model='gemini-2.5-flash',
                                 contents=[image_obj, prompt_content]
@@ -418,7 +445,6 @@ if st.session_state.get('authentication_status'):
                             with st.spinner("Converting text into voice speech track..."):
                                 slow_tts = True if "Slower Speed" in voice_pacing else False
                                 
-                                # Set dialect parameters based on voice choice configuration
                                 lang_code = 'en'
                                 tld_code = 'com'
                                 if "UK Accent" in voice_profile:
