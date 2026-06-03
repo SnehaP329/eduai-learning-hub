@@ -510,7 +510,7 @@ if st.session_state.get('authentication_status'):
                         except Exception as e:
                             st.error(f"Cloud Processing Error: {e}")
 
- # ------------------------------------------
+# ------------------------------------------
     # 3.4 STUDY REMINDERS SECTION (CLEAN & UNIQUE LAYOUT)
     # ------------------------------------------
     with tab_reminders:
@@ -562,9 +562,9 @@ if st.session_state.get('authentication_status'):
             if st.session_state['armed_reminder']:
                 rem = st.session_state['armed_reminder']
                 with st.container(border=True):
-                    st.write(f" **Target Alert:** {rem['time']}")
-                    st.write(f" **Objective:** {rem['topic']}")
-                    st.write(f" **Mode:** *{rem['channel']}*")
+                    st.write(f"⏰ **Target Alert:** {rem['time']}")
+                    st.write(f"📚 **Objective:** {rem['topic']}")
+                    st.write(f"📢 **Mode:** *{rem['channel']}*")
             else:
                 st.info("No active reminder scheduled yet.")
 
@@ -621,7 +621,7 @@ if st.session_state.get('authentication_status'):
                                 gainNode.connect(audioCtx.destination);
                                 
                                 oscillator.start();
-                                oscillator.stop(audioCtx.currentTime + 4.0);
+                                oscillator.stop(audioCtx.currentTime + 2.0);
                             }} catch (err) {{
                                 console.error("Audio block caught:", err);
                             }}
