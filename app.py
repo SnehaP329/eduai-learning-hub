@@ -640,16 +640,7 @@ if st.session_state.get('authentication_status'):
             </script>
             """, height=0, width=0)
 
-        # 🌟 FIXED: Removed duplicate display loop container block entirely
-        with col_rem2:
-            st.markdown("<h3 style='font-weight:700;'>Active Schedule Status</h3>", unsafe_allow_html=True)
-            st.markdown("""
-            <div style='background-color:#111D33; padding:20px; border-radius:12px; border:1px solid #1D2F4F;'>
-                <p style='margin:5px 0;'>🟢 App Background Tracker: <b style='color:#43B581;'>Online (Browser Engine)</b></p>
-                <p style='margin:5px 0;'>🟢 Notification System: <b style='color:#43B581;'>Ready</b></p>
-            </div>
-            """, unsafe_allow_html=True)
-
+       
     # ------------------------------------------
     # 3.5 LOG OUT MODULE
     # ------------------------------------------
