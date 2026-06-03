@@ -11,6 +11,31 @@ import hashlib
 # Page configuration - Set page title to EduAI globally
 st.set_page_config(page_title="EduAI", page_icon="🎓", layout="wide")
 
+# ==========================================
+# 1. DATABASE INITIALIZATION (MOVED TO TOP)
+# ==========================================
+def auto_initialize_db():
+    conn = sqlite3.connect('platform.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            username TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            hashed_password TEXT NOT NULL
+        )
+    ''')
+    cursor.execute("SELECT * FROM users WHERE username='sneha'")
+    if not cursor.fetchone():
+        default_hash = hashlib.sha256(str("password123").encode('utf-8')).hexdigest()
+        cursor.execute(
+            "INSERT INTO users (username, name, hashed_password) VALUES (?, ?, ?)",
+            ("sneha", "Sneha", default_hash)
+        )
+        conn.commit()
+    conn.close()
+
+auto_initialize_db()
+
 # Securely initialize the Gemini Cloud Client using Streamlit Secrets
 try:
     client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
@@ -32,11 +57,11 @@ if st.session_state['authentication_status'] is None:
     query_params = st.query_params
     if "autouser" in query_params:
         auto_user = query_params["autouser"]
-        db_credentials = sqlite3.connect('platform.db')
-        cursor = db_credentials.cursor()
-        cursor.execute("SELECT username, name, hashed_password FROM users WHERE username = ?", (auto_user,))
+        conn = sqlite3.connect('platform.db')
+        cursor = conn.cursor()
+        cursor.execute("SELECT username, name FROM users WHERE username = ?", (auto_user,))
         row = cursor.fetchone()
-        db_credentials.close()
+        conn.close()
         if row:
             st.session_state['authentication_status'] = True
             st.session_state['username'] = row[0]
@@ -249,31 +274,6 @@ else:
 
 def hash_password(password):
     return hashlib.sha256(str(password).encode('utf-8')).hexdigest()
-
-# ==========================================
-# 1. DATABASE INITIALIZATION
-# ==========================================
-def auto_initialize_db():
-    conn = sqlite3.connect('platform.db')
-    cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            username TEXT PRIMARY KEY,
-            name TEXT NOT NULL,
-            hashed_password TEXT NOT NULL
-        )
-    ''')
-    cursor.execute("SELECT * FROM users WHERE username='sneha'")
-    if not cursor.fetchone():
-        default_hash = hash_password("password123")
-        cursor.execute(
-            "INSERT INTO users (username, name, hashed_password) VALUES (?, ?, ?)",
-            ("sneha", "Sneha", default_hash)
-        )
-        conn.commit()
-    conn.close()
-
-auto_initialize_db()
 
 def get_user_from_db(username):
     conn = sqlite3.connect('platform.db')
