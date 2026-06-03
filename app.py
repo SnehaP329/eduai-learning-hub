@@ -335,7 +335,7 @@ if st.session_state.get('authentication_status'):
     st.markdown("<h2 style='text-align: center; color: #FFFFFF; font-weight:900; font-size:2.2rem; margin-top: 0px; margin-bottom: 15px; letter-spacing:-0.5px;'>EduAI</h2>", unsafe_allow_html=True)
     
     tab_home, tab_profile, tab_tts, tab_reminders, tab_logout = st.tabs([
-        "🏠 Home", "👤 Profile", "🎙️ Text to Speech", "⏰ Reminders", "🚪 Log Out"
+        "Home", "Profile", "Text to Speech", "Reminders", "Log Out"
     ])
 
     # ------------------------------------------
@@ -511,7 +511,7 @@ if st.session_state.get('authentication_status'):
                             st.error(f"Cloud Processing Error: {e}")
 
  # ------------------------------------------
-    # 3.4 STUDY REMINDERS SECTION (FULLY PERSISTENT CLIENT ENGINE)
+    # 3.4 STUDY REMINDERS SECTION (CLEAN & UNIQUE LAYOUT)
     # ------------------------------------------
     with tab_reminders:
         st.markdown("<h1 style='font-weight:800; margin-top:15px;'>Study Reminders</h1>", unsafe_allow_html=True)
@@ -532,62 +532,55 @@ if st.session_state.get('authentication_status'):
                 chosen_day = st.selectbox("Select Day of the Week:", ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])
                 days_to_trigger = [chosen_day]
             elif reminder_frequency == "Custom Days of Week":
-                days_to_trigger = [st.datetime.now(ist_tz).strftime("%A")] # Default template fallback
+                days_to_trigger = ["Monday", "Wednesday", "Friday"] # Template placeholder default
             elif reminder_frequency == "One-Time Alert":
                 chosen_date = st.date_input("Select Date:", dt.datetime.now(ist_tz).date())
             
             reminder_time_string = st.text_input("Alert Time (HH:MM format, e.g., 11:58 or 23:15)", value=current_local_time)
-            reminder_channel = st.selectbox("How should we notify you?", ["1. Through Voice Reminder (In-App Sound)", "2. Through On-Screen Notification Alert", "3. Both Audio and Visual Notification"])
+            reminder_channel = st.selectbox("How should we notify you?", ["1. Through Voice Reminder (In-App Sound)", "2. Through On-Screen Notification Alert"])
             
-            # Use Session State to maintain our client-side trigger values persistently
             if 'armed_reminder' not in st.session_state:
                 st.session_state['armed_reminder'] = None
 
             if st.button("Activate Reminder", use_container_width=True):
                 try:
-                    # Validate target string format explicitly
                     validated_time = dt.datetime.strptime(reminder_time_string.strip(), "%H:%M").time()
                     st.session_state['armed_reminder'] = {
                         "time": reminder_time_string.strip(),
                         "topic": reminder_topic,
                         "channel": reminder_channel
                     }
-                    st.success(f"Reminder successfully armed for {validated_time.strftime('%I:%M %p')}!")
-                    st.toast("Background hardware engine armed!")
+                    st.success(f"Reminder activated successfully for {validated_time.strftime('%I:%M %p')}!")
+                    st.toast("Background browser tracker armed!")
                 except ValueError:
-                    st.error("❌ Invalid time format! Please use standard HH:MM matching conventions.")
+                    st.error("❌ Invalid time format! Use HH:MM format.")
 
         with col_rem2:
             st.markdown("<h3 style='font-weight:700;'>Active Schedule Status</h3>", unsafe_allow_html=True)
+            
+            # Displays the details of the set reminder if armed
             if st.session_state['armed_reminder']:
                 rem = st.session_state['armed_reminder']
-                st.markdown(f"""
-                <div style='background-color:#111D33; padding:20px; border-radius:12px; border:1px solid #1D2F4F; margin-bottom:15px;'>
-                    <p style='margin:2px 0;'>⏰ Target Alert: <b style='color:#00F2FE;'>{rem['time']}</b></p>
-                    <p style='margin:2px 0;'>📚 Objective: <b>{rem['topic']}</b></p>
-                    <p style='margin:2px 0;'>📢 Mode: <i>{rem['channel']}</i></p>
-                </div>
-                """, unsafe_allow_html=True)
+                with st.container(border=True):
+                    st.write(f" **Target Alert:** {rem['time']}")
+                    st.write(f" **Objective:** {rem['topic']}")
+                    st.write(f" **Mode:** *{rem['channel']}*")
             else:
-                st.info("No active reminder tracking loops scheduled yet.")
+                st.info("No active reminder scheduled yet.")
 
-            st.markdown("""
-            <div style='background-color:#111D33; padding:20px; border-radius:12px; border:1px solid #1D2F4F;'>
-                <p style='margin:5px 0;'>🟢 App Background Tracker: <b style='color:#43B581;'>Online (Browser Engine)</b></p>
-                <p style='margin:5px 0;'>🟢 Notification System: <b style='color:#43B581;'>Ready</b></p>
-            </div>
-            """, unsafe_allow_html=True)
+            # Tracker status box appears exactly once here
+            with st.container(border=True):
+                st.write("🟢 App Background Tracker: **Online (Browser Engine)**")
+                st.write("🟢 Notification System: **Ready**")
 
         # ======================================================================
-        # PERSISTENT CLIENT INJECTION BLOCK (Using isolated components iframe context)
+        # PERSISTENT CLIENT INJECTION BLOCK (Isolated Client Chime)
         # ======================================================================
         if st.session_state['armed_reminder']:
             rem = st.session_state['armed_reminder']
             
-            # Using st.components.v1.html secures the execution tracking stack so background cycles remain intact
             st.components.v1.html(f"""
             <script>
-                // Instantly request explicit desktop push notification hooks 
                 if (window.Notification && Notification.permission !== "granted") {{
                     Notification.requestPermission();
                 }}
@@ -598,7 +591,6 @@ if st.session_state.get('authentication_status'):
                     if (alreadyTriggered) return;
 
                     const now = new Date();
-                    // Match formatting explicitly with Asia/Kolkata layout
                     const currentIST = now.toLocaleTimeString('en-US', {{ 
                         timeZone: 'Asia/Kolkata', 
                         hour: '2-digit', 
@@ -613,31 +605,29 @@ if st.session_state.get('authentication_status'):
                     if (currentIST === targetTime) {{
                         alreadyTriggered = true;
 
-                        // Execute Audio Synth Engine safely using standard AudioContext
-                        if (mode.includes("Voice") || mode.includes("Both")) {{
+                        if (mode.includes("Voice") || mode.includes("Sound")) {{
                             try {{
                                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                                 const oscillator = audioCtx.createOscillator();
                                 const gainNode = audioCtx.createGain();
                                 
                                 oscillator.type = 'sine';
-                                oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime); // High-clarity D5 Note
+                                oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // Bright Bell Note
                                 
-                                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
-                                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 2.5);
+                                gainNode.gain.setValueAtTime(0.6, audioCtx.currentTime);
+                                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 2.0); // 2-second elegant fade
                                 
                                 oscillator.connect(gainNode);
                                 gainNode.connect(audioCtx.destination);
                                 
                                 oscillator.start();
-                                oscillator.stop(audioCtx.currentTime + 2.5);
+                                oscillator.stop(audioCtx.currentTime + 2.0);
                             }} catch (err) {{
-                                console.error("Audio Context initialization failed due to browser strict autoplayers:", err);
+                                console.error("Audio block caught:", err);
                             }}
                         }}
 
-                        // Trigger native System UI popups 
-                        if ((mode.includes("Notification") || mode.includes("Both")) && window.Notification && Notification.permission === "granted") {{
+                        if (mode.includes("Notification") && window.Notification && Notification.permission === "granted") {{
                             new Notification("📚 EduAI Study Alert", {{
                                 body: "Time to study: " + contextTopic,
                                 requireInteraction: true
@@ -646,7 +636,6 @@ if st.session_state.get('authentication_status'):
                     }}
                 }}
 
-                // Evaluate status loop consistently every 1000ms
                 setInterval(processBackgroundRevisionClock, 1000);
             </script>
             """, height=0, width=0)
