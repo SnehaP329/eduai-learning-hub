@@ -602,10 +602,11 @@ if st.session_state.get('authentication_status'):
                     const mode = "{rem['channel']}";
                     const contextTopic = "{rem['topic']}";
 
-                    if (currentIST === targetTime) {{
+if (currentIST === targetTime) {{
                         alreadyTriggered = true;
 
-                        if (mode.includes("Voice") || mode.includes("Sound")) {{
+                        // Check if mode includes "Voice" OR "Both" to play the 2-second bell sound
+                        if (mode.includes("Voice") || mode.includes("Both")) {{
                             try {{
                                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                                 const oscillator = audioCtx.createOscillator();
@@ -627,7 +628,8 @@ if st.session_state.get('authentication_status'):
                             }}
                         }}
 
-                        if (mode.includes("Notification") && window.Notification && Notification.permission === "granted") {{
+                        // Check if mode includes "Notification" OR "Both" to push the browser card pop-up
+                        if ((mode.includes("Notification") || mode.includes("Both")) && window.Notification && Notification.permission === "granted") {{
                             new Notification("📚 EduAI Study Alert", {{
                                 body: "Time to study: " + contextTopic,
                                 requireInteraction: true
