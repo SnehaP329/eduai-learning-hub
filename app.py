@@ -575,17 +575,24 @@ if st.session_state.get('authentication_status'):
                 alert_message_placeholder = st.empty()
                 
                 st.markdown("""<script>if (Notification.permission !== "granted") { Notification.requestPermission(); }</script>""", unsafe_allow_html=True)
-                status_placeholder.info("⏰ Reminder tracker running in background...")
+                status_placeholder.info("Reminder tracker running in background...")
                 
+                import datetime as dt
+                import pytz
+
                 while not target_triggered:
-                    now = datetime.now()
-                    current_time_str = now.strftime("%H:%M")
+                    # 1. Force the code to use local Indian Standard Time (IST) instead of Server UTC
+                    ist_timezone = pytz.timezone('Asia/Kolkata')
+                    now_ist = dt.datetime.now(ist_timezone)
+                    
+                    current_time_str = now_ist.strftime("%H:%M")
                     target_time_str = reminder_time.strftime("%H:%M")
                     
+                    # 2. Check calendar dates using local IST time
                     day_matches = True
-                    if reminder_frequency == "One-Time Alert" and now.date() != chosen_date:
+                    if reminder_frequency == "One-Time Alert" and now_ist.date() != chosen_date:
                         day_matches = False
-                    elif reminder_frequency in ["Weekly", "Custom Days of Week"] and now.strftime("%A") not in days_to_trigger:
+                    elif reminder_frequency in ["Weekly", "Custom Days of Week"] and now_ist.strftime("%A") not in days_to_trigger:
                         day_matches = False
                         
                     if current_time_str == target_time_str and day_matches:
