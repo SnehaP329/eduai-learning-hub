@@ -27,9 +27,40 @@ if 'name' not in st.session_state:
 if 'history' not in st.session_state:
     st.session_state['history'] = []
 
+# --- PERSISTENT SESSION HANDSHAKE RECOVERY ---
+if st.session_state['authentication_status'] is None:
+    query_params = st.query_params
+    if "autouser" in query_params:
+        auto_user = query_params["autouser"]
+        db_credentials = sqlite3.connect('platform.db')
+        cursor = db_credentials.cursor()
+        cursor.execute("SELECT username, name, hashed_password FROM users WHERE username = ?", (auto_user,))
+        row = cursor.fetchone()
+        db_credentials.close()
+        if row:
+            st.session_state['authentication_status'] = True
+            st.session_state['username'] = row[0]
+            st.session_state['name'] = row[1]
+            st.query_params.clear()
+            st.rerun()
+
 is_authenticated = st.session_state.get('authentication_status')
 
 if not is_authenticated:
+    # Hidden background engine listener to detect local user session keys
+    st.components.v1.html("""
+    <script>
+        const savedUser = window.parent.localStorage.getItem("eduai_remembered_user");
+        if (savedUser) {
+            const currentUrl = new URL(window.parent.location.href);
+            if (!currentUrl.searchParams.has("autouser")) {
+                currentUrl.searchParams.set("autouser", savedUser);
+                window.parent.location.href = currentUrl.toString();
+            }
+        }
+    </script>
+    """, height=0, width=0)
+
     # ==========================================
     # LOGIN SCREEN INTERFACE LAYOUT (STYLING)
     # ==========================================
@@ -302,6 +333,14 @@ if not st.session_state.get('authentication_status'):
                     st.session_state['authentication_status'] = True
                     st.session_state['username'] = username_input
                     st.session_state['name'] = db_credentials["usernames"][username_input]["name"]
+                    
+                    # Store user token in parent localStorage before resetting view
+                    st.components.v1.html(f"""
+                    <script>
+                        window.parent.localStorage.setItem("eduai_remembered_user", "{username_input}");
+                        window.parent.location.reload();
+                    </script>
+                    """, height=0, width=0)
                     st.rerun()
                 else:
                     st.error("Incorrect password. Please try again.")
@@ -507,10 +546,11 @@ if st.session_state.get('authentication_status'):
                                     "chars": len(final_text)
                                 })
                                 st.toast("Saved to your history log!")
+                                st.rerun()  # Forces interface updates to catch item array lengths immediately
                         except Exception as e:
                             st.error(f"Cloud Processing Error: {e}")
 
-# ------------------------------------------
+    # ------------------------------------------
     # 3.4 STUDY REMINDERS SECTION (FULLY CORRECTED)
     # ------------------------------------------
     with tab_reminders:
@@ -551,7 +591,6 @@ if st.session_state.get('authentication_status'):
 
             if st.button("Activate Reminder", use_container_width=True):
                 try:
-                    # SMART FIX: Automatically pads single digits (e.g., converts "14:1" to "14:01")
                     time_parts = raw_time_input.strip().split(":")
                     if len(time_parts) == 2:
                         padded_hour = time_parts[0].zfill(2)
@@ -606,7 +645,7 @@ if st.session_state.get('authentication_status'):
 
                     const now = new Date();
                     const currentIST = now.toLocaleTimeString('en-US', {{ 
-                        timeZone: 'Asia/Kolkata', 
+                        timeZone: 'Asia/Kolkata',  
                         hour: '2-digit', 
                         minute: '2-digit', 
                         hour12: false 
@@ -670,7 +709,7 @@ if st.session_state.get('authentication_status'):
                 setInterval(processBackgroundRevisionClock, 1000);
             </script>
             """, height=0, width=0)
-       
+        
     # ------------------------------------------
     # 3.5 LOG OUT MODULE
     # ------------------------------------------
@@ -682,4 +721,12 @@ if st.session_state.get('authentication_status'):
             st.session_state['authentication_status'] = None
             st.session_state['username'] = None
             st.session_state['name'] = None
+            
+            # Wipe item keys on active sign out to clear system path
+            st.components.v1.html("""
+            <script>
+                window.parent.localStorage.removeItem("eduai_remembered_user");
+                window.parent.location.href = window.parent.location.pathname;
+            </script>
+            """, height=0, width=0)
             st.rerun()
