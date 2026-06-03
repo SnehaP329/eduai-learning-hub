@@ -8,68 +8,8 @@ import datetime as dt
 import pytz
 import hashlib
 
-# ======================================================================
-# 1. CORE SYSTEM LAYOUT & CONFIGURATION
-# ======================================================================
+# Page configuration - Set page title to EduAI globally
 st.set_page_config(page_title="EduAI", page_icon="🎓", layout="wide")
-
-def hash_password(password):
-    return hashlib.sha256(str(password).encode('utf-8')).hexdigest()
-
-# Ensure database tables exist securely right at compilation launch
-def auto_initialize_db():
-    conn = sqlite3.connect('platform.db')
-    cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            username TEXT PRIMARY KEY,
-            name TEXT NOT NULL,
-            hashed_password TEXT NOT NULL
-        )
-    ''')
-    cursor.execute("SELECT * FROM users WHERE username='sneha'")
-    if not cursor.fetchone():
-        default_hash = hash_password("password123")
-        cursor.execute(
-            "INSERT INTO users (username, name, hashed_password) VALUES (?, ?, ?)",
-            ("sneha", "Sneha", default_hash)
-        )
-        conn.commit()
-    conn.close()
-
-auto_initialize_db()
-
-# Database helper utility wrappers accessible globally across modules
-def get_user_from_db(username):
-    conn = sqlite3.connect('platform.db')
-    cursor = conn.cursor()
-    cursor.execute("SELECT username, name, hashed_password FROM users WHERE username = ?", (username,))
-    row = cursor.fetchone()
-    conn.close()
-    if row:
-        return {"usernames": {row[0]: {"name": row[1], "password": row[2]}}}
-    return {"usernames": {}}
-
-def add_user_to_db(username, name, hashed_password):
-    try:
-        conn = sqlite3.connect('platform.db')
-        cursor = conn.cursor()
-        cursor.execute("INSERT INTO users (username, name, hashed_password) VALUES (?, ?, ?)", (username, name, hashed_password))
-        conn.commit()
-        conn.close()
-        return True
-    except sqlite3.IntegrityError:
-        return False
-
-def update_user_profile(username, name, hashed_password=None):
-    conn = sqlite3.connect('platform.db')
-    cursor = conn.cursor()
-    if hashed_password:
-        cursor.execute("UPDATE users SET name = ?, hashed_password = ? WHERE username = ?", (name, hashed_password, username))
-    else:
-        cursor.execute("UPDATE users SET name = ? WHERE username = ?", (name, username))
-    conn.commit()
-    conn.close()
 
 # Securely initialize the Gemini Cloud Client using Streamlit Secrets
 try:
@@ -77,7 +17,7 @@ try:
 except Exception:
     client = None
 
-# Initialize persistent memory structures in system state dictionary
+# Ensure all critical session state variables are fully initialized
 if 'authentication_status' not in st.session_state:
     st.session_state['authentication_status'] = None
 if 'username' not in st.session_state:
@@ -87,39 +27,9 @@ if 'name' not in st.session_state:
 if 'history' not in st.session_state:
     st.session_state['history'] = []
 
-# --- PERSISTENT COOKIELESS STORAGE ASSIGNMENT INTERCEPTOR ---
-if st.session_state['authentication_status'] is None:
-    query_params = st.query_params
-    if "autouser" in query_params:
-        auto_user = query_params["autouser"]
-        db_check = get_user_from_db(auto_user)
-        if auto_user in db_check["usernames"]:
-            st.session_state['authentication_status'] = True
-            st.session_state['username'] = auto_user
-            st.session_state['name'] = db_check["usernames"][auto_user]["name"]
-            st.query_params.clear()
-            st.rerun()
-
 is_authenticated = st.session_state.get('authentication_status')
 
-# ======================================================================
-# 2. INTERFACE BRANCH ROUTING ENGINE
-# ======================================================================
 if not is_authenticated:
-    # JavaScript local client reader block to trigger validation routing
-    st.components.v1.html("""
-    <script>
-        const savedUser = window.parent.localStorage.getItem("eduai_remembered_user");
-        if (savedUser) {
-            const currentUrl = new URL(window.parent.location.href);
-            if (!currentUrl.searchParams.has("autouser")) {
-                currentUrl.searchParams.set("autouser", savedUser);
-                window.parent.location.href = currentUrl.toString();
-            }
-        }
-    </script>
-    """, height=0, width=0)
-
     # ==========================================
     # LOGIN SCREEN INTERFACE LAYOUT (STYLING)
     # ==========================================
@@ -204,60 +114,6 @@ if not is_authenticated:
         h1, h2, h3, h4, h5, h6, p, label, span { color: #F2F3F5 !important; }
     </style>
     """, unsafe_allow_html=True)
-
-    st.markdown("<h1 style='text-align: center; color: #FFFFFF; font-weight:800; font-size:3rem; margin-top:50px; letter-spacing:-0.5px;'>EduAI</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: #8E9AA8; font-size:1.1rem; margin-bottom:40px;'>Learn smarter, grow faster with AI-powered Education</p>", unsafe_allow_html=True)
-    
-    auth_tab1, auth_tab2 = st.tabs(["🔒 Sign In", "Create Account"])
-    
-    with auth_tab1:
-        username_input = st.text_input("Username", key="login_user")
-        password_input = st.text_input("Password", type="password", key="login_pass")
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        if st.button("Sign In", use_container_width=True):
-            db_credentials = get_user_from_db(username_input)
-            if username_input in db_credentials["usernames"]:
-                stored_hash = db_credentials["usernames"][username_input]["password"]
-                input_hash = hash_password(password_input)
-                
-                if input_hash == stored_hash or password_input == "password123" or password_input == "password1234" or stored_hash == password_input:
-                    if stored_hash != input_hash:
-                        update_user_profile(username_input, db_credentials["usernames"][username_input]["name"], input_hash)
-                        
-                    st.session_state['authentication_status'] = True
-                    st.session_state['username'] = username_input
-                    st.session_state['name'] = db_credentials["usernames"][username_input]["name"]
-                    
-                    st.components.v1.html(f"""
-                    <script>
-                        window.parent.localStorage.setItem("eduai_remembered_user", "{username_input}");
-                        window.parent.location.reload();
-                    </script>
-                    """, height=0, width=0)
-                    st.rerun()
-                else:
-                    st.error("Incorrect password. Please try again.")
-            else:
-                st.error("Username not found.")
-                
-    with auth_tab2:
-        new_user = st.text_input("Choose Username", key="reg_user")
-        new_name = st.text_input("Your Full Name", key="reg_name")
-        new_pass = st.text_input("Choose Password", type="password", key="reg_pass")
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        if st.button("Register", use_container_width=True):
-            if new_user and new_name and new_pass:
-                hashed_reg_pass = hash_password(new_pass)
-                success = add_user_to_db(new_user, new_name, hashed_reg_pass)
-                if success:
-                    st.success("Account created successfully! You can now sign in.")
-                else:
-                    st.error("That username is already taken. Try another.")
-            else:
-                st.warning("Please fill in all fields.")
-
 else:
     # ==========================================
     # AUTHENTICATED SYSTEM PANEL STYLING
@@ -360,6 +216,119 @@ else:
     </style>
     """, unsafe_allow_html=True)
 
+def hash_password(password):
+    return hashlib.sha256(str(password).encode('utf-8')).hexdigest()
+
+# ==========================================
+# 1. DATABASE INITIALIZATION
+# ==========================================
+def auto_initialize_db():
+    conn = sqlite3.connect('platform.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            username TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            hashed_password TEXT NOT NULL
+        )
+    ''')
+    cursor.execute("SELECT * FROM users WHERE username='sneha'")
+    if not cursor.fetchone():
+        default_hash = hash_password("password123")
+        cursor.execute(
+            "INSERT INTO users (username, name, hashed_password) VALUES (?, ?, ?)",
+            ("sneha", "Sneha", default_hash)
+        )
+        conn.commit()
+    conn.close()
+
+auto_initialize_db()
+
+def get_user_from_db(username):
+    conn = sqlite3.connect('platform.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT username, name, hashed_password FROM users WHERE username = ?", (username,))
+    row = cursor.fetchone()
+    conn.close()
+    if row:
+        return {"usernames": {row[0]: {"name": row[1], "password": row[2]}}}
+    return {"usernames": {}}
+
+def add_user_to_db(username, name, hashed_password):
+    try:
+        conn = sqlite3.connect('platform.db')
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO users (username, name, hashed_password) VALUES (?, ?, ?)", (username, name, hashed_password))
+        conn.commit()
+        conn.close()
+        return True
+    except sqlite3.IntegrityError:
+        return False
+
+def update_user_profile(username, name, hashed_password=None):
+    conn = sqlite3.connect('platform.db')
+    cursor = conn.cursor()
+    if hashed_password:
+        cursor.execute("UPDATE users SET name = ?, hashed_password = ? WHERE username = ?", (name, hashed_password, username))
+    else:
+        cursor.execute("UPDATE users SET name = ? WHERE username = ?", (name, username))
+    conn.commit()
+    conn.close()
+
+# ==========================================
+# 2. USER LOGIN / REGISTRATION INTERFACE
+# ==========================================
+if not st.session_state.get('authentication_status'):
+    st.markdown("<h1 style='text-align: center; color: #FFFFFF; font-weight:800; font-size:3rem; margin-top:50px; letter-spacing:-0.5px;'>EduAI</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #8E9AA8; font-size:1.1rem; margin-bottom:40px;'>Learn smarter, grow faster with AI-powered Education</p>", unsafe_allow_html=True)
+    
+    auth_tab1, auth_tab2 = st.tabs(["🔒 Sign In", "Create Account"])
+    
+    with auth_tab1:
+        username_input = st.text_input("Username", key="login_user")
+        password_input = st.text_input("Password", type="password", key="login_pass")
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        if st.button("Sign In", use_container_width=True):
+            db_credentials = get_user_from_db(username_input)
+            if username_input in db_credentials["usernames"]:
+                stored_hash = db_credentials["usernames"][username_input]["password"]
+                input_hash = hash_password(password_input)
+                
+                if input_hash == stored_hash or password_input == "password123" or password_input == "password1234" or stored_hash == password_input:
+                    if stored_hash != input_hash:
+                        update_user_profile(username_input, db_credentials["usernames"][username_input]["name"], input_hash)
+                        
+                    st.session_state['authentication_status'] = True
+                    st.session_state['username'] = username_input
+                    st.session_state['name'] = db_credentials["usernames"][username_input]["name"]
+                    st.rerun()
+                else:
+                    st.error("Incorrect password. Please try again.")
+            else:
+                st.error("Username not found.")
+                
+    with auth_tab2:
+        new_user = st.text_input("Choose Username", key="reg_user")
+        new_name = st.text_input("Your Full Name", key="reg_name")
+        new_pass = st.text_input("Choose Password", type="password", key="reg_pass")
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        if st.button("Register", use_container_width=True):
+            if new_user and new_name and new_pass:
+                hashed_reg_pass = hash_password(new_pass)
+                success = add_user_to_db(new_user, new_name, hashed_reg_pass)
+                if success:
+                    st.success("Account created successfully! You can now sign in.")
+                else:
+                    st.error("That username is already taken. Try another.")
+            else:
+                st.warning("Please fill in all fields.")
+
+# ==========================================
+# 3. INTERNAL AUTHENTICATED DASHBOARD MODULES
+# ==========================================
+if st.session_state.get('authentication_status'):
     current_name = st.session_state.get('name', 'User')
     current_username = st.session_state.get('username')
     
@@ -486,64 +455,63 @@ else:
         
         if client is None:
             st.error("Cloud Error: GEMINI_API_KEY is missing from configuration secrets.")
-        else:
-            uploaded_file = st.file_uploader("Upload your document snapshot...", type=["png", "jpg", "jpeg"])
-            
-            if uploaded_file is not None:
-                col_img, col_proc = st.columns(2)
-                with col_img:
-                    st.markdown("<h4 style='font-weight:700;'>Uploaded File</h4>", unsafe_allow_html=True)
-                    st.image(uploaded_file, caption="Original Document Loaded", use_container_width=True)
-                    
-                with col_proc:
-                    st.markdown("<h4 style='font-weight:700;'>Audio Options</h4>", unsafe_allow_html=True)
-                    voice_pacing = st.selectbox("Speaking Speed Rate (WCAG Pacing):", ["Normal Speed", "Slower Speed (For deep listening and note-taking)"])
-                    voice_profile = st.selectbox("Select Target Voice Profile:", ["Default Premium Voice (US)", "Custom Dynamic Voice (UK Accent)", "Custom Dynamic Voice (India Accent)"])
-                    extraction_mode = st.radio("Choose Reading Depth:", ["Summarized Mode (Quick Summary)", "Full Mode (Word-for-Word Transcription)"], key="unique_learning_depth_radio")
-                    
-                    if st.button("Convert to Speech", use_container_width=True):
-                        with st.spinner("Cloud AI processing handwritten layouts..."):
-                            try:
-                                image_obj = Image.open(uploaded_file)
-                                prompt_content = (
-                                    "Analyze the handwritten text in this image. Do not transcribe it word-for-word. Instead, provide a brief, clear, and simplified 2-3 sentence summary of the core concepts."
-                                    if "Summarized" in extraction_mode else
-                                    "Read the handwriting in this image. Transcribe every single word exactly as written on the paper. Fix clear spelling typos smoothly, do not leave out lines, and output clean raw text layout."
-                                )
-                                
-                                response = client.models.generate_content(model='gemini-1.5-flash', contents=[image_obj, prompt_content])
-                                polished_text = response.text
-                                
-                                final_text = st.text_area("Transcribed Study Text", value=polished_text, height=180)
-                                
-                                with st.spinner("Converting text into voice speech track..."):
-                                    slow_tts = "Slower Speed" in voice_pacing
-                                    lang_code, tld_code = 'en', 'com'
-                                    if "UK Accent" in voice_profile: tld_code = 'co.uk'
-                                    elif "India Accent" in voice_profile: tld_code = 'co.in'
-                                        
-                                    tts_engine = gTTS(text=final_text, lang=lang_code, tld=tld_code, slow=slow_tts)
-                                    output_filepath = "dashboard_audio_temp.mp3"
-                                    tts_engine.save(output_filepath)
+            st.stop()
+        
+        uploaded_file = st.file_uploader("Upload your document snapshot...", type=["png", "jpg", "jpeg"])
+        
+        if uploaded_file is not None:
+            col_img, col_proc = st.columns(2)
+            with col_img:
+                st.markdown("<h4 style='font-weight:700;'>Uploaded File</h4>", unsafe_allow_html=True)
+                st.image(uploaded_file, caption="Original Document Loaded", use_container_width=True)
+                
+            with col_proc:
+                st.markdown("<h4 style='font-weight:700;'>Audio Options</h4>", unsafe_allow_html=True)
+                voice_pacing = st.selectbox("Speaking Speed Rate (WCAG Pacing):", ["Normal Speed", "Slower Speed (For deep listening and note-taking)"])
+                voice_profile = st.selectbox("Select Target Voice Profile:", ["Default Premium Voice (US)", "Custom Dynamic Voice (UK Accent)", "Custom Dynamic Voice (India Accent)"])
+                extraction_mode = st.radio("Choose Reading Depth:", ["Summarized Mode (Quick Summary)", "Full Mode (Word-for-Word Transcription)"], key="unique_learning_depth_radio")
+                
+                if st.button("Convert to Speech", use_container_width=True):
+                    with st.spinner("Cloud AI processing handwritten layouts..."):
+                        try:
+                            image_obj = Image.open(uploaded_file)
+                            prompt_content = (
+                                "Analyze the handwritten text in this image. Do not transcribe it word-for-word. Instead, provide a brief, clear, and simplified 2-3 sentence summary of the core concepts."
+                                if "Summarized" in extraction_mode else
+                                "Read the handwriting in this image. Transcribe every single word exactly as written on the paper. Fix clear spelling typos smoothly, do not leave out lines, and output clean raw text layout."
+                            )
+                            
+                            response = client.models.generate_content(model='gemini-2.5-flash', contents=[image_obj, prompt_content])
+                            polished_text = response.text
+                            
+                            final_text = st.text_area("Transcribed Study Text", value=polished_text, height=180)
+                            
+                            with st.spinner("Converting text into voice speech track..."):
+                                slow_tts = "Slower Speed" in voice_pacing
+                                lang_code, tld_code = 'en', 'com'
+                                if "UK Accent" in voice_profile: tld_code = 'co.uk'
+                                elif "India Accent" in voice_profile: tld_code = 'co.in'
                                     
-                                    st.markdown("<h3 style='font-weight:700; margin-top:15px;'>Audio Player</h3>", unsafe_allow_html=True)
-                                    playback_speed = st.selectbox("Select Audio Playback Speed:", [1.0, 1.25, 1.5, 1.75, 2.0], index=0)
-                                    st.audio(output_filepath, format="audio/mp3")
-                                    
-                                    st.markdown(f"<script>var audioTags = window.parent.document.querySelectorAll('audio'); audioTags.forEach(function(audio) {{ audio.playbackRate = {playback_speed}; }});</script>", unsafe_allow_html=True)
-                                    
-                                    st.session_state['history'].append({
-                                        "time": dt.datetime.now(pytz.timezone('Asia/Kolkata')).strftime("%I:%M:%S %p"),
-                                        "filename": f"{uploaded_file.name} ({'Summary' if 'Summarized' in extraction_mode else 'Full'})",
-                                        "chars": len(final_text)
-                                    })
-                                    st.toast("Saved to your history log!")
-                                    st.rerun()
-                            except Exception as e:
-                                st.error(f"Cloud Processing Error: {e}")
+                                tts_engine = gTTS(text=final_text, lang=lang_code, tld=tld_code, slow=slow_tts)
+                                output_filepath = "dashboard_audio_temp.mp3"
+                                tts_engine.save(output_filepath)
+                                
+                                st.markdown("<h3 style='font-weight:700; margin-top:15px;'>Audio Player</h3>", unsafe_allow_html=True)
+                                playback_speed = st.selectbox("Select Audio Playback Speed:", [1.0, 1.25, 1.5, 1.75, 2.0], index=0)
+                                st.audio(output_filepath, format="audio/mp3")
+                                
+                                st.markdown(f"<script>var audioTags = window.parent.document.querySelectorAll('audio'); audioTags.forEach(function(audio) {{ audio.playbackRate = {playback_speed}; }});</script>", unsafe_allow_html=True)
+                                st.session_state['history'].append({
+                                    "time": dt.datetime.now(pytz.timezone('Asia/Kolkata')).strftime("%I:%M:%S %p"),
+                                    "filename": f"{uploaded_file.name} ({'Summary' if 'Summarized' in extraction_mode else 'Full'})",
+                                    "chars": len(final_text)
+                                })
+                                st.toast("Saved to your history log!")
+                        except Exception as e:
+                            st.error(f"Cloud Processing Error: {e}")
 
-    # ------------------------------------------
-    # 3.4 STUDY REMINDERS SECTION
+# ------------------------------------------
+    # 3.4 STUDY REMINDERS SECTION (FULLY CORRECTED)
     # ------------------------------------------
     with tab_reminders:
         st.markdown("<h1 style='font-weight:800; margin-top:15px;'>Study Reminders</h1>", unsafe_allow_html=True)
@@ -583,6 +551,7 @@ else:
 
             if st.button("Activate Reminder", use_container_width=True):
                 try:
+                    # SMART FIX: Automatically pads single digits (e.g., converts "14:1" to "14:01")
                     time_parts = raw_time_input.strip().split(":")
                     if len(time_parts) == 2:
                         padded_hour = time_parts[0].zfill(2)
@@ -618,6 +587,9 @@ else:
                 st.write("🟢 App Background Tracker: **Online (Browser Engine)**")
                 st.write("🟢 Notification System: **Ready**")
 
+        # ======================================================================
+        # PERSISTENT CLIENT INJECTION BLOCK (All Braces Escaped)
+        # ======================================================================
         if st.session_state['armed_reminder']:
             rem = st.session_state['armed_reminder']
             
@@ -634,7 +606,7 @@ else:
 
                     const now = new Date();
                     const currentIST = now.toLocaleTimeString('en-US', {{ 
-                        timeZone: 'Asia/Kolkata',  
+                        timeZone: 'Asia/Kolkata', 
                         hour: '2-digit', 
                         minute: '2-digit', 
                         hour12: false 
@@ -698,7 +670,7 @@ else:
                 setInterval(processBackgroundRevisionClock, 1000);
             </script>
             """, height=0, width=0)
-        
+       
     # ------------------------------------------
     # 3.5 LOG OUT MODULE
     # ------------------------------------------
@@ -710,11 +682,4 @@ else:
             st.session_state['authentication_status'] = None
             st.session_state['username'] = None
             st.session_state['name'] = None
-            
-            st.components.v1.html("""
-            <script>
-                window.parent.localStorage.removeItem("eduai_remembered_user");
-                window.parent.location.href = window.parent.location.pathname;
-            </script>
-            """, height=0, width=0)
             st.rerun()
