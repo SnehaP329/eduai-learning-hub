@@ -537,7 +537,7 @@ if st.session_state.get('authentication_status'):
                 chosen_date = st.date_input("Select Date:", dt.datetime.now(ist_tz).date())
             
             reminder_time_string = st.text_input("Alert Time (HH:MM format, e.g., 11:58 or 23:15)", value=current_local_time)
-            reminder_channel = st.selectbox("How should we notify you?", ["1. Through Voice Reminder (In-App Sound)", "2. Through On-Screen Notification Alert"])
+            reminder_channel = st.selectbox("How should we notify you?", ["1. Through Voice Reminder (In-App Sound)", "2. Through On-Screen Notification Alert", "3. Both Audio and Visual Notification"])
             
             if 'armed_reminder' not in st.session_state:
                 st.session_state['armed_reminder'] = None
