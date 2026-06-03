@@ -521,11 +521,17 @@ if st.session_state.get('authentication_status'):
                         except Exception as e:
                             st.error(f"Cloud Processing Error: {e}")
 
-   # 4. STUDY REMINDERS MODULE
+  # 4. STUDY REMINDERS MODULE
     with tab_reminders:
         st.markdown("<h1 style='font-weight:800; margin-top:15px;'>Study Reminders</h1>", unsafe_allow_html=True)
         st.write("Set up automated alerts to help keep your revision schedule on track.")
         st.markdown("<br>", unsafe_allow_html=True)
+        
+        # Explicitly fetch the exact current local time in Indian Standard Time (IST)
+        import datetime as dt
+        import pytz
+        ist_tz = pytz.timezone('Asia/Kolkata')
+        current_local_time = dt.datetime.now(ist_tz).strftime("%H:%M")
         
         col_rem1, col_rem2 = st.columns(2)
         with col_rem1:
@@ -540,15 +546,15 @@ if st.session_state.get('authentication_status'):
             elif reminder_frequency == "Custom Days of Week":
                 days_to_trigger = st.multiselect("Select Days:", ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], default=["Monday", "Wednesday", "Friday"])
             elif reminder_frequency == "One-Time Alert":
-                chosen_date = st.date_input("Select Date:", datetime.now().date())
+                chosen_date = st.date_input("Select Date:", dt.datetime.now(ist_tz).date())
             
-            reminder_time_string = st.text_input("Alert Time (HH:MM format, e.g., 11:58 or 23:15)", value=datetime.now().strftime("%H:%M"))
+            # 🌟 FIXED: The input box value now defaults directly to your true current local IST time string
+            reminder_time_string = st.text_input("Alert Time (HH:MM format, e.g., 11:58 or 23:15)", value=current_local_time)
             reminder_channel = st.selectbox("How should we notify you?", ["1. Through Voice Reminder (In-App Sound)", "2. Through On-Screen Notification Alert"])
             
             if st.button("Activate Reminder", use_container_width=True):
                 try:
-                    # Parse input format quickly to validate structure
-                    import datetime as dt
+                    # Validate parsing structure safely
                     reminder_time = dt.datetime.strptime(reminder_time_string.strip(), "%H:%M").time()
                 except ValueError:
                     st.error("❌ Invalid time format! Use HH:MM format.")
@@ -581,7 +587,6 @@ if st.session_state.get('authentication_status'):
                         
                         if (currentIST === targetTime) {{
                             if (notificationMode.includes("Voice Reminder")) {{
-                                // Create an invisible local audio object to fire the sound clip instantly
                                 var audioAlert = new Audio("https://raw.githubusercontent.com/SnehaP329/eduai-learning-hub/main/reminder_alert.mp3");
                                 audioAlert.play().catch(function(e) {{ console.log("Audio block context: " + e); }});
                             }}
