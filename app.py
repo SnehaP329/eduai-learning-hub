@@ -521,7 +521,7 @@ if st.session_state.get('authentication_status'):
                         except Exception as e:
                             st.error(f"Cloud Processing Error: {e}")
 
-    # 4. STUDY REMINDERS MODULE
+   # 4. STUDY REMINDERS MODULE
     with tab_reminders:
         st.markdown("<h1 style='font-weight:800; margin-top:15px;'>Study Reminders</h1>", unsafe_allow_html=True)
         st.write("Set up automated alerts to help keep your revision schedule on track.")
@@ -545,37 +545,47 @@ if st.session_state.get('authentication_status'):
             reminder_time_string = st.text_input("Alert Time (HH:MM format, e.g., 11:58 or 23:15)", value=datetime.now().strftime("%H:%M"))
             reminder_channel = st.selectbox("How should we notify you?", ["1. Through Voice Reminder (In-App Sound)", "2. Through On-Screen Notification Alert"])
             
-           if st.button("Activate Reminder", use_container_width=True):
+            if st.button("Activate Reminder", use_container_width=True):
                 try:
-                    # Parse the target alert time input string cleanly
+                    # Parse input format quickly to validate structure
                     import datetime as dt
                     reminder_time = dt.datetime.strptime(reminder_time_string.strip(), "%H:%M").time()
                 except ValueError:
                     st.error("❌ Invalid time format! Use HH:MM format.")
                     st.stop()
 
-                # Generate the custom voice reminder MP3 audio clip instantly
-                with st.spinner("Preparing reminder parameter tracking..."):
+                # Generate the audio clip instantly for the browser pipeline
+                with st.spinner("Preparing reminder parameters..."):
                     reminder_text = f"Attention! This is your scheduled reminder to: {reminder_topic}"
                     tts_reminder = gTTS(text=reminder_text, lang='en', slow=False)
                     tts_reminder.save("reminder_alert.mp3")
                 
-                st.success(f"Reminder scheduled successfully for {reminder_time_string.strip()}!")
+                st.success(f"Reminder activated successfully for {reminder_time_string.strip()}!")
+                st.toast("Background browser tracker armed!")
                 
-                # Dynamic JavaScript execution: Hands tracking over to local browser memory
-                # This prevents server loop timeouts and runs effectively even when backgrounded
+                # Ask browser permissions natively right inside the frame
+                st.markdown("""<script>if (Notification.permission !== "granted") { Notification.requestPermission(); }</script>""", unsafe_allow_html=True)
+                
+                # Pure Client-Side JavaScript Engine: This runs inside the local browser window cache.
+                # It completely bypasses the server loop, preventing crashes when your phone screen closes!
                 st.markdown(f"""
                 <script>
                     function checkReminderTime() {{
                         var now = new Date();
-                        // Force calculation to match Indian Standard Time (IST) offsets
+                        // Force checking clock calculations to use Indian Standard Time (IST) strings
                         var options = {{ timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: false }};
                         var currentIST = now.toLocaleTimeString('en-US', options);
                         
                         var targetTime = "{reminder_time_string.strip()}";
+                        var notificationMode = "{reminder_channel}";
                         
                         if (currentIST === targetTime) {{
-                            // Locate the hidden media playback engines or prompt notifications safely
+                            if (notificationMode.includes("Voice Reminder")) {{
+                                // Create an invisible local audio object to fire the sound clip instantly
+                                var audioAlert = new Audio("https://raw.githubusercontent.com/SnehaP329/eduai-learning-hub/main/reminder_alert.mp3");
+                                audioAlert.play().catch(function(e) {{ console.log("Audio block context: " + e); }});
+                            }}
+                            
                             if (Notification.permission === "granted") {{
                                 new Notification("📚 EduAI Study Alert", {{
                                     body: "Time to study: {reminder_topic}",
@@ -585,71 +595,16 @@ if st.session_state.get('authentication_status'):
                             clearInterval(reminderInterval);
                         }}
                     }}
-                    // Scan device system clock strings smoothly every 5 seconds natively
-                    var reminderInterval = setInterval(checkReminderTime, 5000);
+                    // Scan the local system clock securely every 3 seconds
+                    var reminderInterval = setInterval(checkReminderTime, 3000);
                 </script>
                 """, unsafe_allow_html=True)
-
-                if reminder_frequency == "Daily":
-                    schedule_msg = f"daily at {reminder_time.strftime('%I:%M %p')}"
-                elif reminder_frequency == "One-Time Alert":
-                    schedule_msg = f"once on {chosen_date.strftime('%d-%m-%Y')} at {reminder_time.strftime('%I:%M %p')}"
-                else:
-                    if not days_to_trigger:
-                        st.warning("Please pick at least one calendar day!")
-                        st.stop()
-                    schedule_msg = f"{reminder_frequency} ({', '.join(days_to_trigger)}) at {reminder_time.strftime('%I:%M %p')}"
-                
-                with st.spinner("Preparing reminder parameters..."):
-                    reminder_text = f"Attention! This is your scheduled reminder to: {reminder_topic}"
-                    tts_reminder = gTTS(text=reminder_text, lang='en', slow=False)
-                    tts_reminder.save("reminder_alert.mp3")
-                
-                st.success(f"Reminder scheduled successfully! Will alert you {schedule_msg}.")
-                
-                import time
-                target_triggered = False
-                status_placeholder = st.empty()
-                alert_message_placeholder = st.empty()
-                
-                st.markdown("""<script>if (Notification.permission !== "granted") { Notification.requestPermission(); }</script>""", unsafe_allow_html=True)
-                status_placeholder.info("Reminder tracker running in background...")
-                
-                import datetime as dt
-                import pytz
-
-                while not target_triggered:
-                    # 1. Force the code to use local Indian Standard Time (IST) instead of Server UTC
-                    ist_timezone = pytz.timezone('Asia/Kolkata')
-                    now_ist = dt.datetime.now(ist_timezone)
-                    
-                    current_time_str = now_ist.strftime("%H:%M")
-                    target_time_str = reminder_time.strftime("%H:%M")
-                    
-                    # 2. Check calendar dates using local IST time
-                    day_matches = True
-                    if reminder_frequency == "One-Time Alert" and now_ist.date() != chosen_date:
-                        day_matches = False
-                    elif reminder_frequency in ["Weekly", "Custom Days of Week"] and now_ist.strftime("%A") not in days_to_trigger:
-                        day_matches = False
-                        
-                    if current_time_str == target_time_str and day_matches:
-                        status_placeholder.success("🎉 Reminder Time Reached!")
-                        if "Voice Reminder" in reminder_channel:
-                            st.audio("reminder_alert.mp3", format="audio/mp3", autoplay=True)
-                            alert_message_placeholder.markdown(f'<div class="dashboard-card"><h4>🔊 Playing Voice Reminder</h4><p>Time to study: <b>{reminder_topic}</b></p></div>', unsafe_allow_html=True)
-                        else:
-                            alert_message_placeholder.markdown(f'<div class="dashboard-card" style="border-left-color: #43B581 !important;"><h4>🔔 Notification Sent</h4><p>Time to study: <b>{reminder_topic}</b></p></div><script>if (Notification.permission === "granted") {{ new Notification("📚 EduAI Study Alert", {{ body: "Time to study: {reminder_topic}" }}); }}</script>', unsafe_allow_html=True)
-                        target_triggered = True
-                    else:
-                        status_placeholder.markdown(f'<div class="dashboard-card"><b>Reminder tracker running...</b> Keep this tab open.</div>', unsafe_allow_html=True)
-                        time.sleep(10)
 
         with col_rem2:
             st.markdown("<h3 style='font-weight:700;'>Active Schedule Status</h3>", unsafe_allow_html=True)
             st.markdown("""
             <div style='background-color:#111D33; padding:20px; border-radius:12px; border:1px solid #1D2F4F;'>
-                <p style='margin:5px 0;'>🟢 App Background Tracker: <b style='color:#43B581;'>Online</b></p>
+                <p style='margin:5px 0;'>🟢 App Background Tracker: <b style='color:#43B581;'>Online (Browser Engine)</b></p>
                 <p style='margin:5px 0;'>🟢 Notification System: <b style='color:#43B581;'>Ready</b></p>
             </div>
             """, unsafe_allow_html=True)
