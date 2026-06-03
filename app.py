@@ -621,7 +621,7 @@ if st.session_state.get('authentication_status'):
                                 gainNode.connect(audioCtx.destination);
                                 
                                 oscillator.start();
-                                oscillator.stop(audioCtx.currentTime + 2.0);
+                                oscillator.stop(audioCtx.currentTime + 4.0);
                             }} catch (err) {{
                                 console.error("Audio block caught:", err);
                             }}
