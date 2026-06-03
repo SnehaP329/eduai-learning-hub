@@ -510,8 +510,8 @@ if st.session_state.get('authentication_status'):
                         except Exception as e:
                             st.error(f"Cloud Processing Error: {e}")
 
-    # ------------------------------------------
-    # 3.4 STUDY REMINDERS SECTION (FIXED VISUALS)
+ # ------------------------------------------
+    # 3.4 STUDY REMINDERS SECTION (FULLY PERSISTENT CLIENT ENGINE)
     # ------------------------------------------
     with tab_reminders:
         st.markdown("<h1 style='font-weight:800; margin-top:15px;'>Study Reminders</h1>", unsafe_allow_html=True)
@@ -532,60 +532,124 @@ if st.session_state.get('authentication_status'):
                 chosen_day = st.selectbox("Select Day of the Week:", ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])
                 days_to_trigger = [chosen_day]
             elif reminder_frequency == "Custom Days of Week":
-                days_to_trigger = st.multiselect("Select Days:", ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], default=["Monday", "Wednesday", "Friday"])
+                days_to_trigger = [st.datetime.now(ist_tz).strftime("%A")] # Default template fallback
             elif reminder_frequency == "One-Time Alert":
                 chosen_date = st.date_input("Select Date:", dt.datetime.now(ist_tz).date())
             
             reminder_time_string = st.text_input("Alert Time (HH:MM format, e.g., 11:58 or 23:15)", value=current_local_time)
-            reminder_channel = st.selectbox("How should we notify you?", ["1. Through Voice Reminder (In-App Sound)", "2. Through On-Screen Notification Alert"])
+            reminder_channel = st.selectbox("How should we notify you?", ["1. Through Voice Reminder (In-App Sound)", "2. Through On-Screen Notification Alert", "3. Both Audio and Visual Notification"])
             
+            # Use Session State to maintain our client-side trigger values persistently
+            if 'armed_reminder' not in st.session_state:
+                st.session_state['armed_reminder'] = None
+
             if st.button("Activate Reminder", use_container_width=True):
                 try:
-                    reminder_time = dt.datetime.strptime(reminder_time_string.strip(), "%H:%M").time()
+                    # Validate target string format explicitly
+                    validated_time = dt.datetime.strptime(reminder_time_string.strip(), "%H:%M").time()
+                    st.session_state['armed_reminder'] = {
+                        "time": reminder_time_string.strip(),
+                        "topic": reminder_topic,
+                        "channel": reminder_channel
+                    }
+                    st.success(f"Reminder successfully armed for {validated_time.strftime('%I:%M %p')}!")
+                    st.toast("Background hardware engine armed!")
                 except ValueError:
-                    st.error("❌ Invalid time format! Use HH:MM format.")
-                    st.stop()
+                    st.error("❌ Invalid time format! Please use standard HH:MM matching conventions.")
 
-                st.success(f"Reminder activated successfully for {reminder_time.strftime('%I:%M %p')}!")
-                st.toast("Background browser tracker armed!")
-                
-                # Native browser push notification permissions query frame loop
-                st.markdown("""<script>if (Notification.permission !== "granted") { Notification.requestPermission(); }</script>""", unsafe_allow_html=True)
-                
-                # 🌟 SYSTEM SYNTHESIZER: Client-side hardware audio generator engine. 
-                # Completely bypasses the external storage framework, enabling reliable background alarms.
+        with col_rem2:
+            st.markdown("<h3 style='font-weight:700;'>Active Schedule Status</h3>", unsafe_allow_html=True)
+            if st.session_state['armed_reminder']:
+                rem = st.session_state['armed_reminder']
                 st.markdown(f"""
-                <script>
-                    function checkReminderTime() {{
-                        var now = new Date();
-                        var options = {{ timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: false }};
-                        var currentIST = now.toLocaleTimeString('en-US', options);
-                        var targetTime = "{reminder_time_string.strip()}";
-                        var notificationMode = "{reminder_channel}";
-                        
-                        if (currentIST === targetTime) {{
-                            if (notificationMode.includes("Voice Reminder")) {{
-                                var context = new (window.AudioContext || window.webkitAudioContext)();
-                                var oscillator = context.createOscillator();
+                <div style='background-color:#111D33; padding:20px; border-radius:12px; border:1px solid #1D2F4F; margin-bottom:15px;'>
+                    <p style='margin:2px 0;'>⏰ Target Alert: <b style='color:#00F2FE;'>{rem['time']}</b></p>
+                    <p style='margin:2px 0;'>📚 Objective: <b>{rem['topic']}</b></p>
+                    <p style='margin:2px 0;'>📢 Mode: <i>{rem['channel']}</i></p>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.info("No active reminder tracking loops scheduled yet.")
+
+            st.markdown("""
+            <div style='background-color:#111D33; padding:20px; border-radius:12px; border:1px solid #1D2F4F;'>
+                <p style='margin:5px 0;'>🟢 App Background Tracker: <b style='color:#43B581;'>Online (Browser Engine)</b></p>
+                <p style='margin:5px 0;'>🟢 Notification System: <b style='color:#43B581;'>Ready</b></p>
+            </div>
+            """, unsafe_allow_html=True)
+
+        # ======================================================================
+        # PERSISTENT CLIENT INJECTION BLOCK (Using isolated components iframe context)
+        # ======================================================================
+        if st.session_state['armed_reminder']:
+            rem = st.session_state['armed_reminder']
+            
+            # Using st.components.v1.html secures the execution tracking stack so background cycles remain intact
+            st.components.v1.html(f"""
+            <script>
+                // Instantly request explicit desktop push notification hooks 
+                if (window.Notification && Notification.permission !== "granted") {{
+                    Notification.requestPermission();
+                }}
+
+                let alreadyTriggered = false;
+
+                function processBackgroundRevisionClock() {{
+                    if (alreadyTriggered) return;
+
+                    const now = new Date();
+                    // Match formatting explicitly with Asia/Kolkata layout
+                    const currentIST = now.toLocaleTimeString('en-US', {{ 
+                        timeZone: 'Asia/Kolkata', 
+                        hour: '2-digit', 
+                        minute: '2-digit', 
+                        hour12: false 
+                    }});
+
+                    const targetTime = "{rem['time']}";
+                    const mode = "{rem['channel']}";
+                    const contextTopic = "{rem['topic']}";
+
+                    if (currentIST === targetTime) {{
+                        alreadyTriggered = true;
+
+                        // Execute Audio Synth Engine safely using standard AudioContext
+                        if (mode.includes("Voice") || mode.includes("Both")) {{
+                            try {{
+                                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                                const oscillator = audioCtx.createOscillator();
+                                const gainNode = audioCtx.createGain();
+                                
                                 oscillator.type = 'sine';
-                                oscillator.frequency.setValueAtTime(880, context.currentTime);
-                                oscillator.connect(context.destination);
+                                oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime); // High-clarity D5 Note
+                                
+                                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 2.5);
+                                
+                                oscillator.connect(gainNode);
+                                gainNode.connect(audioCtx.destination);
+                                
                                 oscillator.start();
-                                setTimeout(function() {{ oscillator.stop(); }}, 1500);
+                                oscillator.stop(audioCtx.currentTime + 2.5);
+                            }} catch (err) {{
+                                console.error("Audio Context initialization failed due to browser strict autoplayers:", err);
                             }}
-                            
-                            if (Notification.permission === "granted") {{
-                                new Notification("📚 EduAI Study Alert", {{
-                                    body: "Time to study: {reminder_topic}",
-                                    requireInteraction: true
-                                }});
-                            }}
-                            clearInterval(reminderInterval);
+                        }}
+
+                        // Trigger native System UI popups 
+                        if ((mode.includes("Notification") || mode.includes("Both")) && window.Notification && Notification.permission === "granted") {{
+                            new Notification("📚 EduAI Study Alert", {{
+                                body: "Time to study: " + contextTopic,
+                                requireInteraction: true
+                            }});
                         }}
                     }}
-                    var reminderInterval = setInterval(checkReminderTime, 3000);
-                </script>
-                """, unsafe_allow_html=True)
+                }}
+
+                // Evaluate status loop consistently every 1000ms
+                setInterval(processBackgroundRevisionClock, 1000);
+            </script>
+            """, height=0, width=0)
 
         # 🌟 FIXED: Removed duplicate display loop container block entirely
         with col_rem2:
