@@ -98,7 +98,6 @@ if not is_authenticated:
             box-shadow: 0 0 12px rgba(0, 242, 254, 0.25) !important; 
             -webkit-text-fill-color: #FFFFFF !important;
         }
-        /* Forces mobile browser autofill rules to remain deep dark navy */
         input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus {
             -webkit-box-shadow: 0 0 0px 1000px #080E1A inset !important;
             -webkit-text-fill-color: #FFFFFF !important;
@@ -121,27 +120,21 @@ else:
     # ==========================================
     st.markdown("""
     <style>
-        /* CONFIGURING LAYOUT POSITIONING TO MOVE BRANDING CLEANLY TO TOP EFFECTIVELY */
         .block-container { padding-top: 2rem !important; padding-bottom: 2rem !important; }
-        
-        /* DISABLE SIDEBAR COMPONENTS GLOBALLY */
         div[data-testid="collapsedControl"] { display: none !important; }
         section[data-testid="stSidebar"] { display: none !important; }
         
-        /* COHESIVE SYSTEM PANEL OVERRIDES */
         footer, header, #MainMenu { display: none !important; visibility: hidden !important; height: 0px !important; }
         div[data-testid="stDecoration"], div[data-testid="stAppToolbar"], .stAppToolbar { display: none !important; }
         .stDeployButton, div[data-testid="stDeployButton"], div[data-testid="stViewerMenu"] { display: none !important; }
         div[data-testid="stEmbedFooter"], .stEmbedFooter { display: none !important; visibility: hidden !important; height: 0px !important; }
 
-        /* SURGICAL ELIMINATION OF THE BOTTOM RIGHT CORNER LOGO STRIP */
         iframe[title="streamlitApp"] { bottom: 0 !important; }
         [data-testid="stStatusWidget"] { display: none !important; visibility: hidden !important; }
         .viewerBadge, [class*="viewerBadge"], a[href*="streamlit.io"] { display: none !important; visibility: hidden !important; opacity: 0 !important; }
 
         .stApp { background-color: #0B1426 !important; color: #E3E7ED !important; }
         
-        /* PREMIUM APP-STYLE HORIZONTAL NAV BAR COMPONENT STYLING */
         div[data-testid="stHorizontalBlock"]:has(button[data-baseweb="tab"]) {
             background: #111D33 !important;
             border: 1px solid #1D2F4F !important;
@@ -174,10 +167,9 @@ else:
             color: #00F2FE !important;
             background-color: #1A2A47 !important;
             border: 1px solid rgba(0, 242, 254, 0.2) !important;
-            text-shadow: 0 0 10px rgba(0, 242, 244, 0.3);
+            text-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
         }
         
-        /* UI Input Tracking Styles */
         .stTextInput input, .stTextArea textarea, .stTimeInput input { 
             background-color: #080E1A !important; 
             color: #FFFFFF !important; 
@@ -222,17 +214,6 @@ else:
         div[data-testid="stNotification"], div[role="alert"], div[data-testid="stToast"] { background-color: #111D33 !important; border: 1px solid #1D2F4F !important; border-radius: 12px !important; }
         div[data-testid="stNotification"] *, div[role="alert"] *, div[data-testid="stToast"] * { color: #FFFFFF !important; }
     </style>
-    """, unsafe_allow_html=True)
-
-    # Injects background device title overrides natively for mobile browser installs
-    st.markdown("""
-    <script>
-        window.parent.document.title = "EduAI";
-        var metaTitle = window.parent.document.querySelector('meta[name="apple-mobile-web-app-title"]');
-        if (metaTitle) { metaTitle.setAttribute("content", "EduAI"); }
-        var appName = window.parent.document.querySelector('meta[name="application-name"]');
-        if (appName) { appName.setAttribute("content", "EduAI"); }
-    </script>
     """, unsafe_allow_html=True)
 
 def hash_password(password):
@@ -351,10 +332,8 @@ if st.session_state.get('authentication_status'):
     current_name = st.session_state.get('name', 'User')
     current_username = st.session_state.get('username')
     
-    # Header Branding Banner
     st.markdown("<h2 style='text-align: center; color: #FFFFFF; font-weight:900; font-size:2.2rem; margin-top: 0px; margin-bottom: 15px; letter-spacing:-0.5px;'>EduAI</h2>", unsafe_allow_html=True)
     
-    # Modern Horizontal App Menu Setup
     tab_home, tab_profile, tab_tts, tab_reminders, tab_logout = st.tabs([
         "🏠 Home", "👤 Profile", "🎙️ Text to Speech", "⏰ Reminders", "🚪 Log Out"
     ])
@@ -374,7 +353,6 @@ if st.session_state.get('authentication_status'):
             st.metric(label="Screen Reader Mode", value="Active", delta="Ready to Use", delta_color="normal")
             
         st.markdown("<br>", unsafe_allow_html=True)
-        
         st.markdown("""
         <div class="dashboard-card">
             <h4 style="margin-top:0; color:#00F2FE; font-weight:700; font-size:1.2rem;">About EduAI Learning Features</h4>
@@ -408,7 +386,6 @@ if st.session_state.get('authentication_status'):
         stored_name = user_data.get("name", current_name)
         
         col_prof1, _ = st.columns([1.8, 1.2])
-        
         with col_prof1:
             if not st.session_state['edit_profile_mode']:
                 st.markdown(f"""
@@ -490,94 +467,57 @@ if st.session_state.get('authentication_status'):
                 
             with col_proc:
                 st.markdown("<h4 style='font-weight:700;'>Audio Options</h4>", unsafe_allow_html=True)
-                
-                voice_pacing = st.selectbox(
-                    "Speaking Speed Rate (WCAG Pacing):",
-                    ["Normal Speed", "Slower Speed (For deep listening and note-taking)"]
-                )
-                
-                voice_profile = st.selectbox(
-                    "Select Target Voice Profile:",
-                    ["Default Premium Voice (US)", "Custom Dynamic Voice (UK Accent)", "Custom Dynamic Voice (India Accent)"]
-                )
-                
-                extraction_mode = st.radio(
-                    "Choose Reading Depth:",
-                    ["Summarized Mode (Quick Summary)", "Full Mode (Word-for-Word Transcription)"],
-                    key="unique_learning_depth_radio"
-                )
+                voice_pacing = st.selectbox("Speaking Speed Rate (WCAG Pacing):", ["Normal Speed", "Slower Speed (For deep listening and note-taking)"])
+                voice_profile = st.selectbox("Select Target Voice Profile:", ["Default Premium Voice (US)", "Custom Dynamic Voice (UK Accent)", "Custom Dynamic Voice (India Accent)"])
+                extraction_mode = st.radio("Choose Reading Depth:", ["Summarized Mode (Quick Summary)", "Full Mode (Word-for-Word Transcription)"], key="unique_learning_depth_radio")
                 
                 if st.button("Convert to Speech", use_container_width=True):
                     with st.spinner("Cloud AI processing handwritten layouts..."):
                         try:
                             image_obj = Image.open(uploaded_file)
-                            
-                            if "Summarized" in extraction_mode:
-                                prompt_content = (
-                                    "Analyze the handwritten text in this image. Do not transcribe it word-for-word. "
-                                    "Instead, provide a brief, clear, and simplified 2-3 sentence summary of the core concepts."
-                                )
-                            else:
-                                prompt_content = (
-                                    "Read the handwriting in this image. Transcribe every single word exactly as written on the paper. "
-                                    "Fix clear spelling typos smoothly, do not leave out lines, and output clean raw text layout."
-                                )
-                            
-                            response = client.models.generate_content(
-                                model='gemini-2.5-flash',
-                                contents=[image_obj, prompt_content]
+                            prompt_content = (
+                                "Analyze the handwritten text in this image. Do not transcribe it word-for-word. Instead, provide a brief, clear, and simplified 2-3 sentence summary of the core concepts."
+                                if "Summarized" in extraction_mode else
+                                "Read the handwriting in this image. Transcribe every single word exactly as written on the paper. Fix clear spelling typos smoothly, do not leave out lines, and output clean raw text layout."
                             )
+                            
+                            response = client.models.generate_content(model='gemini-2.5-flash', contents=[image_obj, prompt_content])
                             polished_text = response.text
                             
                             final_text = st.text_area("Transcribed Study Text", value=polished_text, height=180)
                             
                             with st.spinner("Converting text into voice speech track..."):
-                                slow_tts = True if "Slower Speed" in voice_pacing else False
-                                
-                                lang_code = 'en'
-                                tld_code = 'com'
-                                if "UK Accent" in voice_profile:
-                                    tld_code = 'co.uk'
-                                elif "India Accent" in voice_profile:
-                                    tld_code = 'co.in'
+                                slow_tts = "Slower Speed" in voice_pacing
+                                lang_code, tld_code = 'en', 'com'
+                                if "UK Accent" in voice_profile: tld_code = 'co.uk'
+                                elif "India Accent" in voice_profile: tld_code = 'co.in'
                                     
                                 tts_engine = gTTS(text=final_text, lang=lang_code, tld=tld_code, slow=slow_tts)
                                 output_filepath = "dashboard_audio_temp.mp3"
                                 tts_engine.save(output_filepath)
                                 
                                 st.markdown("<h3 style='font-weight:700; margin-top:15px;'>Audio Player</h3>", unsafe_allow_html=True)
-                                
                                 playback_speed = st.selectbox("Select Audio Playback Speed:", [1.0, 1.25, 1.5, 1.75, 2.0], index=0)
                                 st.audio(output_filepath, format="audio/mp3")
                                 
-                                st.markdown(
-                                    f"""
-                                    <script>
-                                        var audioTags = window.parent.document.querySelectorAll('audio');
-                                        audioTags.forEach(function(audio) {{ audio.playbackRate = {playback_speed}; }});
-                                    </script>
-                                    """, unsafe_allow_html=True
-                                )
-                                
+                                st.markdown(f"<script>var audioTags = window.parent.document.querySelectorAll('audio'); audioTags.forEach(function(audio) {{ audio.playbackRate = {playback_speed}; }});</script>", unsafe_allow_html=True)
                                 st.session_state['history'].append({
                                     "time": dt.datetime.now(pytz.timezone('Asia/Kolkata')).strftime("%I:%M:%S %p"),
                                     "filename": f"{uploaded_file.name} ({'Summary' if 'Summarized' in extraction_mode else 'Full'})",
                                     "chars": len(final_text)
                                 })
                                 st.toast("Saved to your history log!")
-                                
                         except Exception as e:
                             st.error(f"Cloud Processing Error: {e}")
 
-   # ------------------------------------------
-    # 3.4 STUDY REMINDERS SECTION (JavaScript Sandbox)
+    # ------------------------------------------
+    # 3.4 STUDY REMINDERS SECTION (FIXED VISUALS)
     # ------------------------------------------
     with tab_reminders:
         st.markdown("<h1 style='font-weight:800; margin-top:15px;'>Study Reminders</h1>", unsafe_allow_html=True)
         st.write("Set up automated alerts to help keep your revision schedule on track.")
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # Explicitly calculate current local time in Indian Standard Time (IST) for input defaults
         ist_tz = pytz.timezone('Asia/Kolkata')
         current_local_time = dt.datetime.now(ist_tz).strftime("%H:%M")
         
@@ -606,33 +546,25 @@ if st.session_state.get('authentication_status'):
                     st.error("❌ Invalid time format! Use HH:MM format.")
                     st.stop()
 
-                with st.spinner("Preparing reminder parameters..."):
-                    reminder_text = f"Attention! This is your scheduled reminder to: {reminder_topic}"
-                    tts_reminder = gTTS(text=reminder_text, lang='en', slow=False)
-                    tts_reminder.save("reminder_alert.mp3")
-                
-                # Dynamically switches display output formatting for presentation convenience
                 st.success(f"Reminder activated successfully for {reminder_time.strftime('%I:%M %p')}!")
                 st.toast("Background browser tracker armed!")
                 
-                # Check push notification permissions natively inside the browser instance
+                # Native browser push notification permissions query frame loop
                 st.markdown("""<script>if (Notification.permission !== "granted") { Notification.requestPermission(); }</script>""", unsafe_allow_html=True)
                 
-                # Pure Client-Side JavaScript Engine: Safely nested inside a Python markdown string wrapper
+                # 🌟 SYSTEM SYNTHESIZER: Client-side hardware audio generator engine. 
+                # Completely bypasses the external storage framework, enabling reliable background alarms.
                 st.markdown(f"""
                 <script>
                     function checkReminderTime() {{
                         var now = new Date();
-                        // Force checking clock calculations to use Indian Standard Time (IST) strings
                         var options = {{ timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: false }};
                         var currentIST = now.toLocaleTimeString('en-US', options);
-                        
                         var targetTime = "{reminder_time_string.strip()}";
                         var notificationMode = "{reminder_channel}";
                         
                         if (currentIST === targetTime) {{
                             if (notificationMode.includes("Voice Reminder")) {{
-                                // Uses the browser's built-in system hardware audio synthesizer to ensure output clarity
                                 var context = new (window.AudioContext || window.webkitAudioContext)();
                                 var oscillator = context.createOscillator();
                                 oscillator.type = 'sine';
@@ -655,15 +587,7 @@ if st.session_state.get('authentication_status'):
                 </script>
                 """, unsafe_allow_html=True)
 
-        with col_rem2:
-            st.markdown("<h3 style='font-weight:700;'>Active Schedule Status</h3>", unsafe_allow_html=True)
-            st.markdown("""
-            <div style='background-color:#111D33; padding:20px; border-radius:12px; border:1px solid #1D2F4F;'>
-                <p style='margin:5px 0;'>🟢 App Background Tracker: <b style='color:#43B581;'>Online (Browser Engine)</b></p>
-                <p style='margin:5px 0;'>🟢 Notification System: <b style='color:#43B581;'>Ready</b></p>
-            </div>
-            """, unsafe_allow_html=True)
-
+        # 🌟 FIXED: Removed duplicate display loop container block entirely
         with col_rem2:
             st.markdown("<h3 style='font-weight:700;'>Active Schedule Status</h3>", unsafe_allow_html=True)
             st.markdown("""
@@ -684,6 +608,4 @@ if st.session_state.get('authentication_status'):
             st.session_state['authentication_status'] = None
             st.session_state['username'] = None
             st.session_state['name'] = None
-            if 'edit_profile_mode' in st.session_state:
-                del st.session_state['edit_profile_mode']
             st.rerun()
