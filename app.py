@@ -573,94 +573,90 @@ if st.session_state.get('authentication_status'):
                 st.write("🟢 App Background Tracker: **Online (Browser Engine)**")
                 st.write("🟢 Notification System: **Ready**")
 
-        # ======================================================================
-        # PERSISTENT CLIENT INJECTION BLOCK (Isolated Client Chime)
+       # ======================================================================
+        # PERSISTENT CLIENT INJECTION BLOCK (Fixed Python f-string Escaping)
         # ======================================================================
         if st.session_state['armed_reminder']:
             rem = st.session_state['armed_reminder']
+            
             st.components.v1.html(f"""
-<script>
-    if (window.Notification && Notification.permission !== "granted") {{
-        Notification.requestPermission();
-    }}
-
-    let alreadyTriggered = false;
-
-    function processBackgroundRevisionClock() {{
-        if (alreadyTriggered) return;
-
-        const now = new Date();
-        const currentIST = now.toLocaleTimeString('en-US', {{ 
-            timeZone: 'Asia/Kolkata', 
-            hour: '2-digit', 
-            minute: '2-digit', 
-            hour12: false 
-        }});
-
-        const targetTime = "{rem['time']}";
-        const mode = "{rem['channel']}";
-        const contextTopic = "{rem['topic']}";
-
-        if (currentIST === targetTime) {{
-            alreadyTriggered = true;
-
-            // 1. SOUND GENERATOR ENGINE
-            if (mode.includes("Voice") || mode.includes("Both")) {{
-                try {{
-                    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                    const oscillator = audioCtx.createOscillator();
-                    const gainNode = audioCtx.createGain();
-                    
-                    oscillator.type = 'sine';
-                    oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); 
-                    
-                    gainNode.gain.setValueAtTime(0.6, audioCtx.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 2.0); 
-                    
-                    oscillator.connect(gainNode);
-                    gainNode.connect(audioCtx.destination);
-                    
-                    oscillator.start();
-                    oscillator.stop(audioCtx.currentTime + 2.0);
-                }} catch (err) {{
-                    console.error("Mobile browser audio auto-play policy blocked audio context.", err);
+            <script>
+                if (window.Notification && Notification.permission !== "granted") {{
+                    Notification.requestPermission();
                 }}
-            }}
 
-            // 2. MOBILE FALLBACK: PHONE VIBRATION (Android Support)
-            if (window.navigator && window.navigator.vibrate) {{
-                // Vibrates: 500ms on, 250ms off, 500ms on
-                window.navigator.vibrate([500, 250, 500]);
-            }}
+                let alreadyTriggered = false;
 
-            // 3. MOBILE FALLBACK: VISUAL MESSAGE BANNER (Guaranteed to show on Mobile)
-            if (mode.includes("Notification") || mode.includes("Both")) {{
-                
-                // Try standard notification first (Works on some updated Android builds)
-                if (window.Notification && Notification.permission === "granted") {{
-                    try {{
-                        new Notification("📚 EduAI Study Alert", {{
-                            body: "Time to study: " + contextTopic,
-                            requireInteraction: true
-                        }});
-                    } catch (e) {{
-                        console.log("Desktop notifications not fully compatible with this mobile OS.");
+                function processBackgroundRevisionClock() {{
+                    if (alreadyTriggered) return;
+
+                    const now = new Date();
+                    const currentIST = now.toLocaleTimeString('en-US', {{ 
+                        timeZone: 'Asia/Kolkata', 
+                        hour: '2-digit', 
+                        minute: '2-digit', 
+                        hour12: false 
+                    }});
+
+                    const targetTime = "{rem['time']}";
+                    const mode = "{rem['channel']}";
+                    const contextTopic = "{rem['topic']}";
+
+                    if (currentIST === targetTime) {{
+                        alreadyTriggered = true;
+
+                        // 1. SOUND GENERATOR ENGINE
+                        if (mode.includes("Voice") || mode.includes("Both")) {{
+                            try {{
+                                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                                const oscillator = audioCtx.createOscillator();
+                                const gainNode = audioCtx.createGain();
+                                
+                                oscillator.type = 'sine';
+                                oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); 
+                                
+                                gainNode.gain.setValueAtTime(0.6, audioCtx.currentTime);
+                                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 2.0); 
+                                
+                                oscillator.connect(gainNode);
+                                gainNode.connect(audioCtx.destination);
+                                
+                                oscillator.start();
+                                oscillator.stop(audioCtx.currentTime + 2.0);
+                            }} catch (err) {{
+                                console.error("Mobile browser audio auto-play policy blocked audio context.", err);
+                            }}
+                        }}
+
+                        // 2. MOBILE FALLBACK: PHONE VIBRATION (Android Support)
+                        if (window.navigator && window.navigator.vibrate) {{
+                            window.navigator.vibrate([500, 250, 500]);
+                        }}
+
+                        // 3. MOBILE FALLBACK: VISUAL MESSAGE BANNER
+                        if (mode.includes("Notification") || mode.includes("Both")) {{
+                            
+                            if (window.Notification && Notification.permission === "granted") {{
+                                try {{
+                                    new Notification("📚 EduAI Study Alert", {{
+                                        body: "Time to study: " + contextTopic,
+                                        requireInteraction: true
+                                    }});
+                                }} catch (e) {{
+                                    console.log("Desktop notifications not fully compatible with this mobile OS.");
+                                }}
+                            }}
+                            
+                            setTimeout(function() {{
+                                alert("⏰ EduAI STUDY ALERT!\\n\\nTime to study: " + contextTopic);
+                            }}, 100);
+                        }}
                     }}
                 }}
-                
-                // Infallible Mobile Alternative: System Alert Popup Window
-                // This breaks through mobile sleep states once the tab becomes active!
-                setTimeout(function() {{
-                    alert("⏰ EduAI STUDY ALERT!\\n\\nTime to study: " + contextTopic);
-                }}, 100);
-            }}
-        }}
-    }}
 
-    setInterval(processBackgroundRevisionClock, 1000);
-</script>
-""", height=0, width=0)
-
+                setInterval(processBackgroundRevisionClock, 1000);
+            </script>
+            """, height=0, width=0)
        
     # ------------------------------------------
     # 3.5 LOG OUT MODULE
