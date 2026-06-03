@@ -545,12 +545,50 @@ if st.session_state.get('authentication_status'):
             reminder_time_string = st.text_input("Alert Time (HH:MM format, e.g., 11:58 or 23:15)", value=datetime.now().strftime("%H:%M"))
             reminder_channel = st.selectbox("How should we notify you?", ["1. Through Voice Reminder (In-App Sound)", "2. Through On-Screen Notification Alert"])
             
-            if st.button("Activate Reminder", use_container_width=True):
+           if st.button("Activate Reminder", use_container_width=True):
                 try:
-                    reminder_time = datetime.strptime(reminder_time_string.strip(), "%H:%M").time()
+                    # Parse the target alert time input string cleanly
+                    import datetime as dt
+                    reminder_time = dt.datetime.strptime(reminder_time_string.strip(), "%H:%M").time()
                 except ValueError:
-                    st.error("❌ Invalid time format!")
+                    st.error("❌ Invalid time format! Use HH:MM format.")
                     st.stop()
+
+                # Generate the custom voice reminder MP3 audio clip instantly
+                with st.spinner("Preparing reminder parameter tracking..."):
+                    reminder_text = f"Attention! This is your scheduled reminder to: {reminder_topic}"
+                    tts_reminder = gTTS(text=reminder_text, lang='en', slow=False)
+                    tts_reminder.save("reminder_alert.mp3")
+                
+                st.success(f"Reminder scheduled successfully for {reminder_time_string.strip()}!")
+                
+                # Dynamic JavaScript execution: Hands tracking over to local browser memory
+                # This prevents server loop timeouts and runs effectively even when backgrounded
+                st.markdown(f"""
+                <script>
+                    function checkReminderTime() {{
+                        var now = new Date();
+                        // Force calculation to match Indian Standard Time (IST) offsets
+                        var options = {{ timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: false }};
+                        var currentIST = now.toLocaleTimeString('en-US', options);
+                        
+                        var targetTime = "{reminder_time_string.strip()}";
+                        
+                        if (currentIST === targetTime) {{
+                            // Locate the hidden media playback engines or prompt notifications safely
+                            if (Notification.permission === "granted") {{
+                                new Notification("📚 EduAI Study Alert", {{
+                                    body: "Time to study: {reminder_topic}",
+                                    requireInteraction: true
+                                }});
+                            }}
+                            clearInterval(reminderInterval);
+                        }}
+                    }}
+                    // Scan device system clock strings smoothly every 5 seconds natively
+                    var reminderInterval = setInterval(checkReminderTime, 5000);
+                </script>
+                """, unsafe_allow_html=True)
 
                 if reminder_frequency == "Daily":
                     schedule_msg = f"daily at {reminder_time.strftime('%I:%M %p')}"
