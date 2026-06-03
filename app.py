@@ -569,7 +569,7 @@ if st.session_state.get('authentication_status'):
                         except Exception as e:
                             st.error(f"Cloud Processing Error: {e}")
 
-    # ------------------------------------------
+   # ------------------------------------------
     # 3.4 STUDY REMINDERS SECTION (JavaScript Sandbox)
     # ------------------------------------------
     with tab_reminders:
@@ -596,7 +596,6 @@ if st.session_state.get('authentication_status'):
             elif reminder_frequency == "One-Time Alert":
                 chosen_date = st.date_input("Select Date:", dt.datetime.now(ist_tz).date())
             
-            # The input field defaults exactly to your current local time string
             reminder_time_string = st.text_input("Alert Time (HH:MM format, e.g., 11:58 or 23:15)", value=current_local_time)
             reminder_channel = st.selectbox("How should we notify you?", ["1. Through Voice Reminder (In-App Sound)", "2. Through On-Screen Notification Alert"])
             
@@ -607,55 +606,63 @@ if st.session_state.get('authentication_status'):
                     st.error("❌ Invalid time format! Use HH:MM format.")
                     st.stop()
 
-                # Pre-render the custom voice reminder MP3 track smoothly
                 with st.spinner("Preparing reminder parameters..."):
                     reminder_text = f"Attention! This is your scheduled reminder to: {reminder_topic}"
                     tts_reminder = gTTS(text=reminder_text, lang='en', slow=False)
                     tts_reminder.save("reminder_alert.mp3")
                 
+                # Dynamically switches display output formatting for presentation convenience
                 st.success(f"Reminder activated successfully for {reminder_time.strftime('%I:%M %p')}!")
                 st.toast("Background browser tracker armed!")
                 
-                # Check push permissions natively inside the browser instance
+                # Check push notification permissions natively inside the browser instance
                 st.markdown("""<script>if (Notification.permission !== "granted") { Notification.requestPermission(); }</script>""", unsafe_allow_html=True)
                 
-                # Pure Client-Side JavaScript Engine: Prevents mobile device background server drops
+                # Pure Client-Side JavaScript Engine: Safely nested inside a Python markdown string wrapper
                 st.markdown(f"""
                 <script>
-    function checkReminderTime() {
-        var now = new Date();
-        var options = { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: false };
-        var currentIST = now.toLocaleTimeString('en-US', options);
-        
-        var targetTime = "{reminder_time_string.strip()}";
-        var notificationMode = "{reminder_channel}";
-        
-        if (currentIST === targetTime) {
-            if (notificationMode.includes("Voice Reminder")) {
-                // 🌟 FIX: Uses the browser's built-in system hardware audio synthesizer
-                // This creates a clear, sharp alert chime that cannot be blocked by GitHub links!
-                var context = new (window.AudioContext || window.webkitAudioContext)();
-                var oscillator = context.createOscillator();
-                oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(880, context.currentTime); // High pitch A-note
-                oscillator.connect(context.destination);
-                oscillator.start();
-                setTimeout(function() { oscillator.stop(); }, 1500); // Ring out loud for 1.5 seconds
-            }
-            
-            if (Notification.permission === "granted") {
-                new Notification("📚 EduAI Study Alert", {
-                    body: "Time to study: {reminder_topic}",
-                    requireInteraction: true
-                });
-            }
-            clearInterval(reminderInterval);
-        }
-    }
-
-    var reminderInterval = setInterval(checkReminderTime, 3000);
-</script>
+                    function checkReminderTime() {{
+                        var now = new Date();
+                        // Force checking clock calculations to use Indian Standard Time (IST) strings
+                        var options = {{ timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: false }};
+                        var currentIST = now.toLocaleTimeString('en-US', options);
+                        
+                        var targetTime = "{reminder_time_string.strip()}";
+                        var notificationMode = "{reminder_channel}";
+                        
+                        if (currentIST === targetTime) {{
+                            if (notificationMode.includes("Voice Reminder")) {{
+                                // Uses the browser's built-in system hardware audio synthesizer to ensure output clarity
+                                var context = new (window.AudioContext || window.webkitAudioContext)();
+                                var oscillator = context.createOscillator();
+                                oscillator.type = 'sine';
+                                oscillator.frequency.setValueAtTime(880, context.currentTime);
+                                oscillator.connect(context.destination);
+                                oscillator.start();
+                                setTimeout(function() {{ oscillator.stop(); }}, 1500);
+                            }}
+                            
+                            if (Notification.permission === "granted") {{
+                                new Notification("📚 EduAI Study Alert", {{
+                                    body: "Time to study: {reminder_topic}",
+                                    requireInteraction: true
+                                }});
+                            }}
+                            clearInterval(reminderInterval);
+                        }}
+                    }}
+                    var reminderInterval = setInterval(checkReminderTime, 3000);
+                </script>
                 """, unsafe_allow_html=True)
+
+        with col_rem2:
+            st.markdown("<h3 style='font-weight:700;'>Active Schedule Status</h3>", unsafe_allow_html=True)
+            st.markdown("""
+            <div style='background-color:#111D33; padding:20px; border-radius:12px; border:1px solid #1D2F4F;'>
+                <p style='margin:5px 0;'>🟢 App Background Tracker: <b style='color:#43B581;'>Online (Browser Engine)</b></p>
+                <p style='margin:5px 0;'>🟢 Notification System: <b style='color:#43B581;'>Ready</b></p>
+            </div>
+            """, unsafe_allow_html=True)
 
         with col_rem2:
             st.markdown("<h3 style='font-weight:700;'>Active Schedule Status</h3>", unsafe_allow_html=True)
