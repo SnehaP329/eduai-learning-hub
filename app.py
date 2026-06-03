@@ -613,7 +613,7 @@ if st.session_state.get('authentication_status'):
                     tts_reminder = gTTS(text=reminder_text, lang='en', slow=False)
                     tts_reminder.save("reminder_alert.mp3")
                 
-                st.success(f"Reminder activated successfully for {reminder_time_string.strip()}!")
+                st.success(f"Reminder activated successfully for {reminder_time.strftime('%I:%M %p')}!")
                 st.toast("Background browser tracker armed!")
                 
                 # Check push permissions natively inside the browser instance
