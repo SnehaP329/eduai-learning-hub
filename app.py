@@ -511,7 +511,7 @@ else:
                                     "Read the handwriting in this image. Transcribe every single word exactly as written on the paper. Fix clear spelling typos smoothly, do not leave out lines, and output clean raw text layout."
                                 )
                                 
-                                response = client.models.generate_content(model='gemini-2.5-flash', contents=[image_obj, prompt_content])
+                                response = client.models.generate_content(model='gemini-1.5-flash', contents=[image_obj, prompt_content])
                                 polished_text = response.text
                                 
                                 final_text = st.text_area("Transcribed Study Text", value=polished_text, height=180)
