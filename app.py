@@ -622,43 +622,39 @@ if st.session_state.get('authentication_status'):
                 # Pure Client-Side JavaScript Engine: Prevents mobile device background server drops
                 st.markdown(f"""
                 <script>
-                    // Core audio instance prepared globally inside the window block
-                    var userReminderAudio = new Audio("https://raw.githubusercontent.com/SnehaP329/eduai-learning-hub/main/reminder_alert.mp3");
-                    
-                    function checkReminderTime() {{
-                        var now = new Date();
-                        // Force clock check calculations to lock matching Indian Standard Time (IST) strings
-                        var options = {{ timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: false }};
-                        var currentIST = now.toLocaleTimeString('en-US', options);
-                        
-                        var targetTime = "{reminder_time_string.strip()}";
-                        var notificationMode = "{reminder_channel}";
-                        
-                        if (currentIST === targetTime) {{
-                            if (notificationMode.includes("Voice Reminder")) {{
-                                userReminderAudio.play().catch(function(e) {{ console.log("Audio pipeline bypass error: " + e); }});
-                            }}
-                            
-                            if (Notification.permission === "granted") {{
-                                new Notification("📚 EduAI Study Alert", {{
-                                    body: "Time to study: {reminder_topic}",
-                                    requireInteraction: true
-                                }});
-                            }}
-                            clearInterval(reminderInterval);
-                        }}
-                    }}
-                    
-                    // Unlocks browser autoplay audio filters natively on the user interaction thread
-                    document.addEventListener('click', function() {{
-                        userReminderAudio.play().then(function() {{
-                            userReminderAudio.pause();
-                            userReminderAudio.currentTime = 0;
-                        }}).catch(function(e) {{ console.log("Autoplay unblock context: " + e); }});
-                    }}, {{ once: true }});
+    function checkReminderTime() {
+        var now = new Date();
+        var options = { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: false };
+        var currentIST = now.toLocaleTimeString('en-US', options);
+        
+        var targetTime = "{reminder_time_string.strip()}";
+        var notificationMode = "{reminder_channel}";
+        
+        if (currentIST === targetTime) {
+            if (notificationMode.includes("Voice Reminder")) {
+                // 🌟 FIX: Uses the browser's built-in system hardware audio synthesizer
+                // This creates a clear, sharp alert chime that cannot be blocked by GitHub links!
+                var context = new (window.AudioContext || window.webkitAudioContext)();
+                var oscillator = context.createOscillator();
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(880, context.currentTime); // High pitch A-note
+                oscillator.connect(context.destination);
+                oscillator.start();
+                setTimeout(function() { oscillator.stop(); }, 1500); // Ring out loud for 1.5 seconds
+            }
+            
+            if (Notification.permission === "granted") {
+                new Notification("📚 EduAI Study Alert", {
+                    body: "Time to study: {reminder_topic}",
+                    requireInteraction: true
+                });
+            }
+            clearInterval(reminderInterval);
+        }
+    }
 
-                    var reminderInterval = setInterval(checkReminderTime, 3000);
-                </script>
+    var reminderInterval = setInterval(checkReminderTime, 3000);
+</script>
                 """, unsafe_allow_html=True)
 
         with col_rem2:
