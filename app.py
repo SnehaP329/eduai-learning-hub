@@ -4,7 +4,8 @@ import streamlit as st
 from PIL import Image
 from google import genai
 from gtts import gTTS
-from datetime import datetime
+import datetime as dt
+import pytz
 import hashlib
 
 # Page configuration - Set page title to EduAI globally
@@ -16,7 +17,7 @@ try:
 except Exception:
     client = None
 
-# Ensure the critical session states are properly initialized
+# Ensure all critical session state variables are fully initialized
 if 'authentication_status' not in st.session_state:
     st.session_state['authentication_status'] = None
 if 'username' not in st.session_state:
@@ -29,7 +30,9 @@ if 'history' not in st.session_state:
 is_authenticated = st.session_state.get('authentication_status')
 
 if not is_authenticated:
-    # FRONT PAGE: Animated deep midnight gradient wave matching your reference theme
+    # ==========================================
+    # LOGIN SCREEN INTERFACE LAYOUT (STYLING)
+    # ==========================================
     st.markdown("""
     <style>
         @keyframes algowaveFlow {
@@ -77,11 +80,31 @@ if not is_authenticated:
             border-bottom: 2px solid transparent !important; transition: all 0.3s ease !important; white-space: nowrap !important;
         }
         button[data-baseweb="tab"][aria-selected="true"] { color: #00F2FE !important; border-bottom: 2px solid #FFFFFF !important; text-shadow: 0 0 10px rgba(0, 242, 254, 0.4); }
-        div[data-baseweb="input"] input {
-            background-color: #080E1A !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.12) !important;
-            border-radius: 12px !important; padding: 14px 18px !important; transition: all 0.25s ease !important; -webkit-text-fill-color: #FFFFFF !important;
+        
+        /* STOPS FIELDS FROM TURNING WHITE DURING KEYBOARD TYPING */
+        div[data-baseweb="input"] input, .stTextInput input, input[type="text"], input[type="password"] {
+            background-color: #080E1A !important; 
+            color: #FFFFFF !important; 
+            border: 1px solid rgba(255, 255, 255, 0.12) !important;
+            border-radius: 12px !important; 
+            padding: 14px 18px !important; 
+            transition: all 0.25s ease !important; 
+            -webkit-text-fill-color: #FFFFFF !important;
         }
-        div[data-baseweb="input"] input:focus { border-color: #00F2FE !important; box-shadow: 0 0 12px rgba(0, 242, 254, 0.25) !important; }
+        div[data-baseweb="input"] input:focus, .stTextInput input:focus { 
+            background-color: #080E1A !important;
+            color: #FFFFFF !important;
+            border-color: #00F2FE !important; 
+            box-shadow: 0 0 12px rgba(0, 242, 254, 0.25) !important; 
+            -webkit-text-fill-color: #FFFFFF !important;
+        }
+        /* Forces mobile browser autofill rules to remain deep dark navy */
+        input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus {
+            -webkit-box-shadow: 0 0 0px 1000px #080E1A inset !important;
+            -webkit-text-fill-color: #FFFFFF !important;
+            transition: background-color 5000s ease-in-out 0s !important;
+        }
+        
         div[data-baseweb="input"] button, div[data-baseweb="input"] div { background-color: transparent !important; border: none !important; }
         div.stButton > button {
             background: linear-gradient(135deg, #00F2FE 0%, #40E0D0 100%) !important; color: #070B14 !important; border: none !important;
@@ -93,6 +116,9 @@ if not is_authenticated:
     </style>
     """, unsafe_allow_html=True)
 else:
+    # ==========================================
+    # AUTHENTICATED SYSTEM PANEL STYLING
+    # ==========================================
     st.markdown("""
     <style>
         /* CONFIGURING LAYOUT POSITIONING TO MOVE BRANDING CLEANLY TO TOP EFFECTIVELY */
@@ -115,7 +141,7 @@ else:
 
         .stApp { background-color: #0B1426 !important; color: #E3E7ED !important; }
         
-        /* PREMIUM MOBILE NAV COMPONENT STYLING */
+        /* PREMIUM APP-STYLE HORIZONTAL NAV BAR COMPONENT STYLING */
         div[data-testid="stHorizontalBlock"]:has(button[data-baseweb="tab"]) {
             background: #111D33 !important;
             border: 1px solid #1D2F4F !important;
@@ -148,14 +174,30 @@ else:
             color: #00F2FE !important;
             background-color: #1A2A47 !important;
             border: 1px solid rgba(0, 242, 254, 0.2) !important;
-            text-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
+            text-shadow: 0 0 10px rgba(0, 242, 244, 0.3);
         }
         
-        /* UI Components Styling */
-        .stTextInput input, .stTextArea textarea, .stTimeInput input { background-color: #080E1A !important; color: #FFFFFF !important; border: 1px solid #1D2F4F !important; border-radius: 10px !important; -webkit-text-fill-color: #FFFFFF !important; }
+        /* UI Input Tracking Styles */
+        .stTextInput input, .stTextArea textarea, .stTimeInput input { 
+            background-color: #080E1A !important; 
+            color: #FFFFFF !important; 
+            border: 1px solid #1D2F4F !important; 
+            border-radius: 10px !important; 
+            -webkit-text-fill-color: #FFFFFF !important; 
+        }
         div[data-baseweb="select"] > div { background-color: #080E1A !important; color: #FFFFFF !important; border: 1px solid #1D2F4F !important; }
         div[data-baseweb="select"] [data-testid="stMarkdownContainer"] p { color: #FFFFFF !important; }
-        .stTextInput input:focus, .stTextArea textarea:focus, .stTimeInput input:focus, div[data-baseweb="select"]:focus { border-color: #00F2FE !important; box-shadow: 0 0 8px rgba(0, 242, 254, 0.2) !important; }
+        .stTextInput input:focus, .stTextArea textarea:focus, .stTimeInput input:focus, div[data-baseweb="select"]:focus { 
+            border-color: #00F2FE !important; 
+            box-shadow: 0 0 8px rgba(0, 242, 254, 0.2) !important; 
+            background-color: #080E1A !important;
+            color: #FFFFFF !important;
+        }
+        input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus {
+            -webkit-box-shadow: 0 0 0px 1000px #080E1A inset !important;
+            -webkit-text-fill-color: #FFFFFF !important;
+            transition: background-color 5000s ease-in-out 0s !important;
+        }
         
         .dashboard-card { background: #111D33 !important; border: 1px solid #1D2F4F !important; padding: 24px; border-radius: 16px; margin-bottom: 20px; border-left: 5px solid #00F2FE !important; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
         div[data-testid="stMetric"] { background: #111D33 !important; border: 1px solid #1D2F4F !important; padding: 16px 22px !important; border-radius: 14px !important; box-shadow: 0 4px 15px rgba(0,0,0,0.15) !important; }
@@ -182,7 +224,7 @@ else:
     </style>
     """, unsafe_allow_html=True)
 
-    # Injects a background document title override script natively
+    # Injects background device title overrides natively for mobile browser installs
     st.markdown("""
     <script>
         window.parent.document.title = "EduAI";
@@ -197,7 +239,7 @@ def hash_password(password):
     return hashlib.sha256(str(password).encode('utf-8')).hexdigest()
 
 # ==========================================
-# 1. SQLITE INITIALIZATION
+# 1. DATABASE INITIALIZATION
 # ==========================================
 def auto_initialize_db():
     conn = sqlite3.connect('platform.db')
@@ -303,21 +345,23 @@ if not st.session_state.get('authentication_status'):
                 st.warning("Please fill in all fields.")
 
 # ==========================================
-# 3. INTERNAL AUTHENTICATED SYSTEM DASHBOARD
+# 3. INTERNAL AUTHENTICATED DASHBOARD MODULES
 # ==========================================
 if st.session_state.get('authentication_status'):
     current_name = st.session_state.get('name', 'User')
     current_username = st.session_state.get('username')
     
-    # Injects a sleek, centered 'EduAI' branding title into the top space
+    # Header Branding Banner
     st.markdown("<h2 style='text-align: center; color: #FFFFFF; font-weight:900; font-size:2.2rem; margin-top: 0px; margin-bottom: 15px; letter-spacing:-0.5px;'>EduAI</h2>", unsafe_allow_html=True)
     
-    # Navigation Tabs Panel
+    # Modern Horizontal App Menu Setup
     tab_home, tab_profile, tab_tts, tab_reminders, tab_logout = st.tabs([
-        "Home", "Profile", "Text to Speech", "Reminders", "Log Out"
+        "🏠 Home", "👤 Profile", "🎙️ Text to Speech", "⏰ Reminders", "🚪 Log Out"
     ])
 
-    # 1. HOME MODULE
+    # ------------------------------------------
+    # 3.1 HOME SECTION
+    # ------------------------------------------
     with tab_home:
         st.markdown(f"<h1 style='font-weight:800; letter-spacing:-0.5px; margin-top:5px;'>Welcome back, {current_name}!</h1>", unsafe_allow_html=True)
         
@@ -349,7 +393,9 @@ if st.session_state.get('authentication_status'):
             for log in reversed(st.session_state['history']):
                 st.write(f"- **{log['time']}**: Read `{log['filename']}` ({log['chars']} characters converted).")
 
-    # 2. MY PROFILE MODULE
+    # ------------------------------------------
+    # 3.2 PROFILE SECTION
+    # ------------------------------------------
     with tab_profile:
         st.markdown("<h1 style='font-weight:800; letter-spacing:-0.5px; margin-top:5px;'>My Profile</h1>", unsafe_allow_html=True)
         st.write("Manage your personal details and account security settings below.")
@@ -422,7 +468,9 @@ if st.session_state.get('authentication_status'):
                         st.session_state['edit_profile_mode'] = False
                         st.rerun()
 
-    # 3. TEXT TO SPEECH MODULE
+    # ------------------------------------------
+    # 3.3 TEXT TO SPEECH SECTION (AI Pipeline)
+    # ------------------------------------------
     with tab_tts:
         st.markdown("<h1 style='font-weight:800; margin-top:15px;'>Text to Speech</h1>", unsafe_allow_html=True)
         st.write("Convert your handwritten pages or document snapshots into spoken audio.")
@@ -512,7 +560,7 @@ if st.session_state.get('authentication_status'):
                                 )
                                 
                                 st.session_state['history'].append({
-                                    "time": datetime.now().strftime("%I:%M:%S %p"),
+                                    "time": dt.datetime.now(pytz.timezone('Asia/Kolkata')).strftime("%I:%M:%S %p"),
                                     "filename": f"{uploaded_file.name} ({'Summary' if 'Summarized' in extraction_mode else 'Full'})",
                                     "chars": len(final_text)
                                 })
@@ -521,15 +569,15 @@ if st.session_state.get('authentication_status'):
                         except Exception as e:
                             st.error(f"Cloud Processing Error: {e}")
 
-  # 4. STUDY REMINDERS MODULE
+    # ------------------------------------------
+    # 3.4 STUDY REMINDERS SECTION (JavaScript Sandbox)
+    # ------------------------------------------
     with tab_reminders:
         st.markdown("<h1 style='font-weight:800; margin-top:15px;'>Study Reminders</h1>", unsafe_allow_html=True)
         st.write("Set up automated alerts to help keep your revision schedule on track.")
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # Explicitly fetch the exact current local time in Indian Standard Time (IST)
-        import datetime as dt
-        import pytz
+        # Explicitly calculate current local time in Indian Standard Time (IST) for input defaults
         ist_tz = pytz.timezone('Asia/Kolkata')
         current_local_time = dt.datetime.now(ist_tz).strftime("%H:%M")
         
@@ -548,19 +596,18 @@ if st.session_state.get('authentication_status'):
             elif reminder_frequency == "One-Time Alert":
                 chosen_date = st.date_input("Select Date:", dt.datetime.now(ist_tz).date())
             
-            # 🌟 FIXED: The input box value now defaults directly to your true current local IST time string
+            # The input field defaults exactly to your current local time string
             reminder_time_string = st.text_input("Alert Time (HH:MM format, e.g., 11:58 or 23:15)", value=current_local_time)
             reminder_channel = st.selectbox("How should we notify you?", ["1. Through Voice Reminder (In-App Sound)", "2. Through On-Screen Notification Alert"])
             
             if st.button("Activate Reminder", use_container_width=True):
                 try:
-                    # Validate parsing structure safely
                     reminder_time = dt.datetime.strptime(reminder_time_string.strip(), "%H:%M").time()
                 except ValueError:
                     st.error("❌ Invalid time format! Use HH:MM format.")
                     st.stop()
 
-                # Generate the audio clip instantly for the browser pipeline
+                # Pre-render the custom voice reminder MP3 track smoothly
                 with st.spinner("Preparing reminder parameters..."):
                     reminder_text = f"Attention! This is your scheduled reminder to: {reminder_topic}"
                     tts_reminder = gTTS(text=reminder_text, lang='en', slow=False)
@@ -569,16 +616,18 @@ if st.session_state.get('authentication_status'):
                 st.success(f"Reminder activated successfully for {reminder_time_string.strip()}!")
                 st.toast("Background browser tracker armed!")
                 
-                # Ask browser permissions natively right inside the frame
+                # Check push permissions natively inside the browser instance
                 st.markdown("""<script>if (Notification.permission !== "granted") { Notification.requestPermission(); }</script>""", unsafe_allow_html=True)
                 
-                # Pure Client-Side JavaScript Engine: This runs inside the local browser window cache.
-                # It completely bypasses the server loop, preventing crashes when your phone screen closes!
+                # Pure Client-Side JavaScript Engine: Prevents mobile device background server drops
                 st.markdown(f"""
                 <script>
+                    // Core audio instance prepared globally inside the window block
+                    var userReminderAudio = new Audio("https://raw.githubusercontent.com/SnehaP329/eduai-learning-hub/main/reminder_alert.mp3");
+                    
                     function checkReminderTime() {{
                         var now = new Date();
-                        // Force checking clock calculations to use Indian Standard Time (IST) strings
+                        // Force clock check calculations to lock matching Indian Standard Time (IST) strings
                         var options = {{ timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: false }};
                         var currentIST = now.toLocaleTimeString('en-US', options);
                         
@@ -587,8 +636,7 @@ if st.session_state.get('authentication_status'):
                         
                         if (currentIST === targetTime) {{
                             if (notificationMode.includes("Voice Reminder")) {{
-                                var audioAlert = new Audio("https://raw.githubusercontent.com/SnehaP329/eduai-learning-hub/main/reminder_alert.mp3");
-                                audioAlert.play().catch(function(e) {{ console.log("Audio block context: " + e); }});
+                                userReminderAudio.play().catch(function(e) {{ console.log("Audio pipeline bypass error: " + e); }});
                             }}
                             
                             if (Notification.permission === "granted") {{
@@ -600,7 +648,15 @@ if st.session_state.get('authentication_status'):
                             clearInterval(reminderInterval);
                         }}
                     }}
-                    // Scan the local system clock securely every 3 seconds
+                    
+                    // Unlocks browser autoplay audio filters natively on the user interaction thread
+                    document.addEventListener('click', function() {{
+                        userReminderAudio.play().then(function() {{
+                            userReminderAudio.pause();
+                            userReminderAudio.currentTime = 0;
+                        }}).catch(function(e) {{ console.log("Autoplay unblock context: " + e); }});
+                    }}, {{ once: true }});
+
                     var reminderInterval = setInterval(checkReminderTime, 3000);
                 </script>
                 """, unsafe_allow_html=True)
@@ -614,7 +670,9 @@ if st.session_state.get('authentication_status'):
             </div>
             """, unsafe_allow_html=True)
 
-    # 5. LOG OUT CONTROL
+    # ------------------------------------------
+    # 3.5 LOG OUT MODULE
+    # ------------------------------------------
     with tab_logout:
         st.markdown("<h2 style='font-weight:800; margin-top:15px;'>Sign Out of Platform</h2>", unsafe_allow_html=True)
         st.write("Are you sure you want to log out of your profile session?")
