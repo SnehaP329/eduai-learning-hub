@@ -511,7 +511,7 @@ if st.session_state.get('authentication_status'):
                             st.error(f"Cloud Processing Error: {e}")
 
 # ------------------------------------------
-    # 3.4 STUDY REMINDERS SECTION (CLEAN & UNIQUE LAYOUT)
+    # 3.4 STUDY REMINDERS SECTION (FULLY CORRECTED)
     # ------------------------------------------
     with tab_reminders:
         st.markdown("<h1 style='font-weight:800; margin-top:15px;'>Study Reminders</h1>", unsafe_allow_html=True)
@@ -532,33 +532,48 @@ if st.session_state.get('authentication_status'):
                 chosen_day = st.selectbox("Select Day of the Week:", ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])
                 days_to_trigger = [chosen_day]
             elif reminder_frequency == "Custom Days of Week":
-                days_to_trigger = ["Monday", "Wednesday", "Friday"] # Template placeholder default
+                days_to_trigger = ["Monday", "Wednesday", "Friday"]
             elif reminder_frequency == "One-Time Alert":
                 chosen_date = st.date_input("Select Date:", dt.datetime.now(ist_tz).date())
             
-            reminder_time_string = st.text_input("Alert Time (HH:MM format, e.g., 11:58 or 23:15)", value=current_local_time)
-            reminder_channel = st.selectbox("How should we notify you?", ["1. Through Voice Reminder (In-App Sound)", "2. Through On-Screen Notification Alert", "3. Both Audio and Visual Notification"])
+            raw_time_input = st.text_input("Alert Time (HH:MM format, e.g., 11:58 or 23:15)", value=current_local_time)
+            reminder_channel = st.selectbox(
+                "How should we notify you?", 
+                [
+                    "1. Through Voice Reminder (In-App Sound)", 
+                    "2. Through On-Screen Notification Alert",
+                    "3. Both Audio and Visual Notification"
+                ]
+            )
             
             if 'armed_reminder' not in st.session_state:
                 st.session_state['armed_reminder'] = None
 
             if st.button("Activate Reminder", use_container_width=True):
                 try:
-                    validated_time = dt.datetime.strptime(reminder_time_string.strip(), "%H:%M").time()
+                    # SMART FIX: Automatically pads single digits (e.g., converts "14:1" to "14:01")
+                    time_parts = raw_time_input.strip().split(":")
+                    if len(time_parts) == 2:
+                        padded_hour = time_parts[0].zfill(2)
+                        padded_minute = time_parts[1].zfill(2)
+                        reminder_time_string = f"{padded_hour}:{padded_minute}"
+                    else:
+                        reminder_time_string = raw_time_input.strip()
+
+                    validated_time = dt.datetime.strptime(reminder_time_string, "%H:%M").time()
                     st.session_state['armed_reminder'] = {
-                        "time": reminder_time_string.strip(),
+                        "time": reminder_time_string,
                         "topic": reminder_topic,
                         "channel": reminder_channel
                     }
                     st.success(f"Reminder activated successfully for {validated_time.strftime('%I:%M %p')}!")
                     st.toast("Background browser tracker armed!")
                 except ValueError:
-                    st.error("❌ Invalid time format! Use HH:MM format.")
+                    st.error("❌ Invalid time format! Please use the standard HH:MM format (e.g. 14:05).")
 
         with col_rem2:
             st.markdown("<h3 style='font-weight:700;'>Active Schedule Status</h3>", unsafe_allow_html=True)
             
-            # Displays the details of the set reminder if armed
             if st.session_state['armed_reminder']:
                 rem = st.session_state['armed_reminder']
                 with st.container(border=True):
@@ -568,13 +583,12 @@ if st.session_state.get('authentication_status'):
             else:
                 st.info("No active reminder scheduled yet.")
 
-            # Tracker status box appears exactly once here
             with st.container(border=True):
                 st.write("🟢 App Background Tracker: **Online (Browser Engine)**")
                 st.write("🟢 Notification System: **Ready**")
 
-       # ======================================================================
-        # PERSISTENT CLIENT INJECTION BLOCK (Fixed Python f-string Escaping)
+        # ======================================================================
+        # PERSISTENT CLIENT INJECTION BLOCK (All Braces Escaped)
         # ======================================================================
         if st.session_state['armed_reminder']:
             rem = st.session_state['armed_reminder']
@@ -605,7 +619,7 @@ if st.session_state.get('authentication_status'):
                     if (currentIST === targetTime) {{
                         alreadyTriggered = true;
 
-                        // 1. SOUND GENERATOR ENGINE
+                        // 1. BELL AUDIO ENGINE
                         if (mode.includes("Voice") || mode.includes("Both")) {{
                             try {{
                                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -624,18 +638,17 @@ if st.session_state.get('authentication_status'):
                                 oscillator.start();
                                 oscillator.stop(audioCtx.currentTime + 2.0);
                             }} catch (err) {{
-                                console.error("Mobile browser audio auto-play policy blocked audio context.", err);
+                                console.error("Audio Context blocked:", err);
                             }}
                         }}
 
-                        // 2. MOBILE FALLBACK: PHONE VIBRATION (Android Support)
+                        // 2. INTERNAL DEVICE HAPTICS VIBRATION
                         if (window.navigator && window.navigator.vibrate) {{
                             window.navigator.vibrate([500, 250, 500]);
                         }}
 
-                        // 3. MOBILE FALLBACK: VISUAL MESSAGE BANNER
+                        // 3. SYSTEM LEVEL NOTIFICATIONS & POPUPS
                         if (mode.includes("Notification") || mode.includes("Both")) {{
-                            
                             if (window.Notification && Notification.permission === "granted") {{
                                 try {{
                                     new Notification("📚 EduAI Study Alert", {{
@@ -643,7 +656,7 @@ if st.session_state.get('authentication_status'):
                                         requireInteraction: true
                                     }});
                                 }} catch (e) {{
-                                    console.log("Desktop notifications not fully compatible with this mobile OS.");
+                                    console.log("System notifications skipped on this specific OS layout.");
                                 }}
                             }}
                             
